@@ -14,4 +14,6 @@ name = "japonfou"
 
 [dependencies]
 axum = "0.5.17"
+config = "0.13.2"
+serde = { version = "1.0.147", features = ["derive"] }
 tokio = { version = "1.21.2", features = ["full"] }

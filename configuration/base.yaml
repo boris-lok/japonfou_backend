@@ -1,0 +1,10 @@
+database:
+  host: "127.0.0.1"
+  port: 15432
+  username: postgres
+  password: password
+  database_name: "japonfou"
+  require_ssl: false
+application:
+  port: 3000
+  host: 127.0.0.1
