@@ -17,5 +17,5 @@ async fn main() {
 
     println!("listening on {:?}", listener);
 
-    run(listener).await.unwrap()
+    run(configuration, listener).await.unwrap()
 }

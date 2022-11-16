@@ -22,13 +22,15 @@ pub async fn spawn_app() -> TestApp {
         c
     };
 
+    // Configure the test database
+    configure_database(&configuration.database).await;
+    let db_pool = get_database_connection(&configuration.database).await;
+
     let address = format!("127.0.0.1:{}", configuration.application.port);
     let listener = TcpListener::bind(&address).expect("Can't bind tcp listener");
     let application_port = listener.local_addr().unwrap().port();
-    let _ = tokio::spawn(run(listener));
+    let _ = tokio::spawn(run(configuration, listener));
 
-    // Configure the test database
-    configure_database(&configuration.database).await;
 
     let client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
@@ -40,7 +42,7 @@ pub async fn spawn_app() -> TestApp {
         address: format!("http://127.0.0.1:{}", application_port),
         port: application_port,
         api_client: client,
-        db_pool: get_database_connection(&configuration.database).await,
+        db_pool,
     }
 }
 
