@@ -13,6 +13,7 @@ pub async fn create_customer_handler(
 ) -> Json<NewCustomerResponse> {
     let conn = app_state.db_pool;
 
+    // TODO: improve the error handling, not just unwrap.
     let new_customer = payload.try_into().unwrap();
 
     // TODO: improve the error handling, not just unwrap.

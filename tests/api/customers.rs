@@ -1,4 +1,4 @@
-use crate::helpers::spawn_app;
+use crate::helpers::{spawn_app, TestApp};
 use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
 use fake::faker::phone_number::en::PhoneNumber;
@@ -48,4 +48,47 @@ async fn create_customer_works() {
     assert_eq!(data_from_db.email, Some(email));
     assert_eq!(data_from_db.name, name);
     assert_eq!(data_from_db.phone, Some(phone));
+}
+
+#[tokio::test]
+async fn create_new_customer_return_a_400_when_data_is_invalid() {
+    // Arrange
+    let app = spawn_app().await;
+    let uri = format!("{}/api/v1/customers", app.address);
+    let test_case = vec![
+        (
+            serde_json::json!({
+                "name": "boris",
+                "email": "123456789",
+                "phone": "123456789",
+            }),
+            "Email is invalid",
+        ),
+        (
+            serde_json::json!({
+                "name": "boris",
+                "email": "boris.lok@outlook.com",
+                "phone": "adfadfa",
+            }),
+            "Phone is invalid",
+        ),
+    ];
+
+    for (body, msg) in test_case {
+        // Act
+        let response = app
+            .api_client
+            .post(&uri)
+            .json(&body)
+            .send()
+            .await
+            .expect("Failed to execute a request.");
+
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            "The API didn't fail with 400 Bad Request when the payload was {}",
+            msg
+        );
+    }
 }
