@@ -1,7 +1,6 @@
-use crate::helpers::{spawn_app, TestApp};
+use crate::helpers::spawn_app;
 use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
-use fake::faker::phone_number::en::PhoneNumber;
 use fake::Fake;
 use japonfou::routes::NewCustomerResponse;
 
@@ -11,7 +10,9 @@ async fn create_customer_works() {
     let app = spawn_app().await;
     let name: String = Name().fake();
     let email: String = SafeEmail().fake();
-    let phone: String = PhoneNumber().fake();
+    // let phone: String = PhoneNumber().fake();
+    // TODO: fake phone number is not correct. (e.g. "613-637-8110 x76344")
+    let phone = "(853) 12345678".to_string();
 
     let request = serde_json::json!({
         "name": name,

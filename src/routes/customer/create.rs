@@ -2,24 +2,28 @@ use crate::routes::customer::{
     customer_id_generator, CreateCustomer, NewCustomer, NewCustomerResponse,
 };
 use crate::startup::AppState;
+use anyhow::Context;
 use axum::extract::State;
 
+use crate::errors::{AppError, CustomerError};
 use axum::Json;
 use sqlx::PgPool;
 
 pub async fn create_customer_handler(
     State(app_state): State<AppState>,
     Json(payload): Json<CreateCustomer>,
-) -> Json<NewCustomerResponse> {
+) -> Result<Json<NewCustomerResponse>, AppError> {
     let conn = app_state.db_pool;
 
-    // TODO: improve the error handling, not just unwrap.
-    let new_customer = payload.try_into().unwrap();
+    let new_customer = payload
+        .try_into()
+        .map_err(|e| CustomerError::BadArguments(e))?;
 
-    // TODO: improve the error handling, not just unwrap.
-    let id = create_customer(&conn, new_customer).await.unwrap();
+    let id = create_customer(&conn, new_customer)
+        .await
+        .context("Failed to insert a new customer in the database")?;
 
-    Json(NewCustomerResponse(id))
+    Ok(Json(NewCustomerResponse(id)))
 }
 
 async fn create_customer(conn: &PgPool, customer: NewCustomer) -> Result<i64, sqlx::Error> {
@@ -30,7 +34,6 @@ async fn create_customer(conn: &PgPool, customer: NewCustomer) -> Result<i64, sq
     }
     .await;
 
-    // TODO: improve the error handling
     sqlx::query!(
         r#"
     INSERT INTO customers (id, name, email, phone, remark, created_at)
@@ -42,8 +45,7 @@ async fn create_customer(conn: &PgPool, customer: NewCustomer) -> Result<i64, sq
         customer.phone.map(|e| e.0),
     )
     .execute(conn)
-    .await
-    .unwrap();
+    .await?;
 
     Ok(id)
 }

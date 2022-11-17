@@ -1,3 +1,5 @@
+use crate::get_phone_number_regex;
+
 pub struct ValidEmail(pub String);
 
 impl ValidEmail {
@@ -14,8 +16,15 @@ pub struct ValidPhone(pub String);
 
 impl ValidPhone {
     pub fn parse(s: String) -> Result<Self, String> {
-        //TODO: validate the phone number
-        Ok(Self(s))
+        dbg!(&s);
+        let re = get_phone_number_regex();
+        if re.is_match(&s) {
+            Ok(Self(s))
+        } else {
+            Err(format!(
+                "{s} is not a valid phone number. Please follow this format (853) 12345678"
+            ))
+        }
     }
 }
 
