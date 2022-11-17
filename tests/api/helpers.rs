@@ -31,7 +31,6 @@ pub async fn spawn_app() -> TestApp {
     let application_port = listener.local_addr().unwrap().port();
     let _ = tokio::spawn(run(configuration, listener));
 
-
     let client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
         .cookie_store(true)

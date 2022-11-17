@@ -1,4 +1,4 @@
-use crate::routes::customer::{CreateCustomer, NewCustomer};
+use crate::routes::customer::{customer_id_generator, CreateCustomer, NewCustomer};
 use crate::startup::AppState;
 use axum::extract::State;
 use axum::http::StatusCode;
@@ -13,20 +13,26 @@ pub async fn create_customer_handler(
 
     let new_customer = payload.try_into().unwrap();
 
-    let _ = create_customer(&conn, new_customer).await;
+    let _id = create_customer(&conn, new_customer).await;
 
     //TODO: return new customer id
     StatusCode::OK
 }
 
-async fn create_customer(conn: &PgPool, customer: NewCustomer) -> Result<(), sqlx::Error> {
+async fn create_customer(conn: &PgPool, customer: NewCustomer) -> Result<i64, sqlx::Error> {
+    let id = async {
+        let generator = customer_id_generator();
+        let mut generator = generator.lock().unwrap();
+        generator.real_time_generate()
+    }
+    .await;
+
     sqlx::query!(
         r#"
     INSERT INTO customers (id, name, email, phone, remark, created_at)
     VALUES ($1, $2, $3, $4, null, now());
     "#,
-        //TODO: generate a customer id
-        1,
+        id,
         customer.name,
         customer.email.map(|e| e.0),
         customer.phone.map(|e| e.0),
@@ -35,5 +41,5 @@ async fn create_customer(conn: &PgPool, customer: NewCustomer) -> Result<(), sql
     .await
     .unwrap();
 
-    Ok(())
+    Ok(id)
 }
