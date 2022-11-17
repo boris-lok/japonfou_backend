@@ -46,3 +46,6 @@ impl TryFrom<CreateCustomer> for NewCustomer {
         })
     }
 }
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct NewCustomerResponse(pub i64);

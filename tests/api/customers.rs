@@ -3,6 +3,7 @@ use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
 use fake::faker::phone_number::en::PhoneNumber;
 use fake::Fake;
+use japonfou::routes::NewCustomerResponse;
 
 #[tokio::test]
 async fn create_customer_works() {
@@ -30,13 +31,21 @@ async fn create_customer_works() {
 
     // Assert
     assert_eq!(response.status().as_u16(), 200);
+    let response: Result<NewCustomerResponse, reqwest::Error> = response.json().await;
+    assert!(response.is_ok());
+    let response = response.unwrap();
 
-    // let data_from_db = sqlx::query!("SELECT name, email, phone FROM customers")
-    //     .fetch_one(&app.db_pool)
-    //     .await
-    //     .expect("Failed to fetch saved customer");
-    //
-    // assert_eq!(data_from_db.email, Some(email));
-    // assert_eq!(data_from_db.name, name);
-    // assert_eq!(data_from_db.phone, Some(phone));
+    let id = response.0;
+
+    let data_from_db = sqlx::query!(
+        r#"SELECT name, email, phone FROM customers where id=$1"#,
+        id
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .expect("Failed to fetch saved customer");
+
+    assert_eq!(data_from_db.email, Some(email));
+    assert_eq!(data_from_db.name, name);
+    assert_eq!(data_from_db.phone, Some(phone));
 }
