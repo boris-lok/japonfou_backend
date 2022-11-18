@@ -9,6 +9,7 @@ use crate::errors::{AppError, CustomerError};
 use axum::Json;
 use sqlx::PgPool;
 
+#[tracing::instrument(name = "Create a new customer", skip(app_state))]
 pub async fn create_customer_handler(
     State(app_state): State<AppState>,
     Json(payload): Json<CreateCustomer>,

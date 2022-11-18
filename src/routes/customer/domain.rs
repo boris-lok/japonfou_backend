@@ -28,7 +28,7 @@ impl ValidPhone {
     }
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Debug)]
 pub struct CreateCustomer {
     pub name: String,
     pub email: Option<String>,

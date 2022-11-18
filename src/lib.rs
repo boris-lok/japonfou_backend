@@ -5,6 +5,7 @@ pub mod configuration;
 pub mod errors;
 pub mod routes;
 pub mod startup;
+pub mod telemetry;
 
 pub fn get_phone_number_regex() -> &'static Regex {
     static INSTANCE: OnceCell<Regex> = OnceCell::new();
