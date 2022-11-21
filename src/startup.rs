@@ -38,7 +38,7 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
     };
 
     // build our application with a route
-    let app = Router::with_state(state)
+    let app = Router::new()
         .route("/api/v1/health_check", get(health_check))
         .route("/api/v1/customers", post(create_customer_handler))
         .layer(
@@ -53,7 +53,8 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
                         )
                         .on_response(DefaultOnResponse::new().include_headers(true)),
                 ),
-        );
+        )
+        .with_state(state);
 
     axum::Server::from_tcp(listener)
         .expect("Can't bind tcp listener")
