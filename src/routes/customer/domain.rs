@@ -48,6 +48,10 @@ impl TryFrom<CreateCustomer> for NewCustomer {
         let email = value.email.map(ValidEmail::parse).transpose()?;
         let phone = value.phone.map(ValidPhone::parse).transpose()?;
 
+        if email.is_none() && phone.is_none() {
+            return Err("Email and phone are missing.".to_string());
+        }
+
         Ok(Self {
             name: value.name,
             email,

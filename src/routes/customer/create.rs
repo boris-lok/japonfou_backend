@@ -4,6 +4,7 @@ use crate::routes::customer::{
 use crate::startup::AppState;
 use anyhow::Context;
 use axum::extract::State;
+use axum_extra::extract::WithRejection;
 
 use crate::errors::{AppError, CustomerError};
 use axum::Json;
@@ -12,7 +13,7 @@ use sqlx::PgPool;
 #[tracing::instrument(name = "Create a new customer", skip(app_state))]
 pub async fn create_customer_handler(
     State(app_state): State<AppState>,
-    Json(payload): Json<CreateCustomer>,
+    WithRejection(Json(payload), _): WithRejection<Json<CreateCustomer>, AppError>,
 ) -> Result<Json<NewCustomerResponse>, AppError> {
     let conn = app_state.db_pool;
 
