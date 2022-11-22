@@ -1,5 +1,6 @@
 use crate::get_phone_number_regex;
 
+#[derive(Clone)]
 pub struct ValidEmail(pub String);
 
 impl ValidEmail {
@@ -12,6 +13,7 @@ impl ValidEmail {
     }
 }
 
+#[derive(Clone)]
 pub struct ValidPhone(pub String);
 
 impl ValidPhone {
@@ -62,3 +64,16 @@ impl TryFrom<CreateCustomer> for NewCustomer {
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct NewCustomerResponse(pub i64);
+
+#[derive(sea_query::Iden)]
+pub enum Customers {
+    Table,
+    Id,
+    Name,
+    Email,
+    Phone,
+    Remark,
+    CreatedAt,
+    UpdatedAt,
+    DeletedAt,
+}

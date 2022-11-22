@@ -15,7 +15,7 @@ where
     Sink: for<'a> MakeWriter<'a> + Sync + Send + 'static,
 {
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(env_filter));
-    let fmt = BunyanFormattingLayer::new(name.into(), sink);
+    let fmt = BunyanFormattingLayer::new(name, sink);
 
     Registry::default().with(filter).with(fmt)
 }

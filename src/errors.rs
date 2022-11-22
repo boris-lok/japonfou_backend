@@ -17,6 +17,9 @@ impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {
             AppError::Customer(CustomerError::BadArguments(msg)) => (StatusCode::BAD_REQUEST, msg),
+            AppError::Customer(CustomerError::CustomerIsExist) => {
+                (StatusCode::CONFLICT, self.to_string())
+            }
             AppError::UnexpectedError(_) => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             AppError::JsonExtractorRejection(ref e) => match e {
                 JsonRejection::JsonDataError(_) => (StatusCode::BAD_REQUEST, self.to_string()),
@@ -38,4 +41,6 @@ impl IntoResponse for AppError {
 pub enum CustomerError {
     #[error("{0}")]
     BadArguments(String),
+    #[error("customer is exist.")]
+    CustomerIsExist,
 }
