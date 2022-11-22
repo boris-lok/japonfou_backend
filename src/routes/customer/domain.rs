@@ -1,6 +1,7 @@
 use crate::get_phone_number_regex;
+use crate::routes::customer_id_generator;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ValidEmail(pub String);
 
 impl ValidEmail {
@@ -13,7 +14,7 @@ impl ValidEmail {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ValidPhone(pub String);
 
 impl ValidPhone {
@@ -35,29 +36,39 @@ pub struct CreateCustomer {
     pub name: String,
     pub email: Option<String>,
     pub phone: Option<String>,
+    pub remark: Option<String>,
 }
 
 pub struct NewCustomer {
+    pub id: i64,
     pub name: String,
     pub email: Option<ValidEmail>,
     pub phone: Option<ValidPhone>,
+    pub remark: Option<String>,
 }
 
-impl TryFrom<CreateCustomer> for NewCustomer {
-    type Error = String;
+impl NewCustomer {
+    pub async fn parse(customer: CreateCustomer) -> Result<Self, String> {
+        let id = async {
+            let generator = customer_id_generator();
+            let mut generator = generator.lock().unwrap();
+            generator.real_time_generate()
+        }
+        .await;
 
-    fn try_from(value: CreateCustomer) -> Result<Self, Self::Error> {
-        let email = value.email.map(ValidEmail::parse).transpose()?;
-        let phone = value.phone.map(ValidPhone::parse).transpose()?;
+        let email = customer.email.map(ValidEmail::parse).transpose()?;
+        let phone = customer.phone.map(ValidPhone::parse).transpose()?;
 
         if email.is_none() && phone.is_none() {
             return Err("Email and phone are missing.".to_string());
         }
 
         Ok(Self {
-            name: value.name,
+            id,
+            name: customer.name,
             email,
             phone,
+            remark: customer.remark,
         })
     }
 }

@@ -1,9 +1,12 @@
 mod domain;
+mod repo;
 mod route;
 
 pub use domain::*;
 use once_cell::sync::OnceCell;
+pub use repo::{CustomerRepo, PostgresCustomerRepoImpl};
 pub use route::create_customer_handler;
+
 use snowflake::SnowflakeIdGenerator;
 use std::sync::Mutex;
 

@@ -1,9 +1,10 @@
 use axum::http::Request;
 use std::net::TcpListener;
+use std::sync::Arc;
 
 use axum::routing::get;
 use axum::routing::post;
-use axum::Router;
+use axum::{Extension, Router};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use tower::ServiceBuilder;
@@ -14,7 +15,9 @@ use tracing::Level;
 use uuid::Uuid;
 
 use crate::configuration::{DatabaseSettings, Settings};
-use crate::routes::{create_customer_handler, health_check};
+use crate::routes::{
+    create_customer_handler, health_check, CustomerRepo, PostgresCustomerRepoImpl,
+};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -37,6 +40,12 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
         db_pool: get_database_connection(&config.database).await,
     };
 
+    let customer_repo = PostgresCustomerRepoImpl::new(state.db_pool.clone())
+        .await
+        .map(Arc::new)
+        .expect("Can't create customer repository")
+        as Arc<dyn CustomerRepo + Send + Sync>;
+
     // build our application with a route
     let app = Router::new()
         .route("/api/v1/health_check", get(health_check))
@@ -54,6 +63,7 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
                         .on_response(DefaultOnResponse::new().include_headers(true)),
                 ),
         )
+        .layer(Extension(customer_repo))
         .with_state(state);
 
     axum::Server::from_tcp(listener)
