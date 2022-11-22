@@ -133,3 +133,41 @@ async fn create_new_customer_return_a_400_when_data_is_missing() {
         );
     }
 }
+
+#[tokio::test]
+async fn create_new_customer_return_a_400_when_customer_is_duplicate() {
+    let app = spawn_app().await;
+    let name: String = Name().fake();
+    let email: String = SafeEmail().fake();
+    // let phone: String = PhoneNumber().fake();
+    let phone = "(853) 12345678".to_string();
+
+    let request = serde_json::json!({
+        "name": name,
+        "email": email,
+        "phone": phone,
+    });
+    let uri = format!("{}/api/v1/customers", app.address);
+
+    // Act
+    let response = app
+        .api_client
+        .post(&uri)
+        .json(&request)
+        .send()
+        .await
+        .expect("Failed to execute a request.");
+
+    // Assert
+    assert_eq!(response.status().as_u16(), 200);
+
+    let response = app
+        .api_client
+        .post(&uri)
+        .json(&request)
+        .send()
+        .await
+        .expect("Failed to execute a request.");
+
+    assert_eq!(response.status().as_u16(), 409);
+}
