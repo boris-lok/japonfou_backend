@@ -1,13 +1,15 @@
-use crate::helpers::spawn_app;
 use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
 use fake::Fake;
+
 use japonfou::routes::NewCustomerResponse;
+
+use crate::helpers::spawn_app;
 
 #[tokio::test]
 async fn create_customer_works() {
     // Arrange
-    let app = spawn_app().await;
+    let app = spawn_app().await.login().await;
     let name: String = Name().fake();
     let email: String = SafeEmail().fake();
     // let phone: String = PhoneNumber().fake();
@@ -25,6 +27,10 @@ async fn create_customer_works() {
     let response = app
         .api_client
         .post(&uri)
+        .header(
+            reqwest::header::AUTHORIZATION,
+            "Bearer ".to_owned() + &app.jwt_token.unwrap(),
+        )
         .json(&request)
         .send()
         .await
@@ -54,7 +60,7 @@ async fn create_customer_works() {
 #[tokio::test]
 async fn create_new_customer_return_a_400_when_data_is_invalid() {
     // Arrange
-    let app = spawn_app().await;
+    let app = spawn_app().await.login().await;
     let uri = format!("{}/api/v1/customers", app.address);
     let test_case = vec![
         (
@@ -75,12 +81,15 @@ async fn create_new_customer_return_a_400_when_data_is_invalid() {
         ),
     ];
 
+    let token = "Bearer ".to_owned() + &app.jwt_token.unwrap();
+
     for (body, msg) in test_case {
         // Act
         let response = app
             .api_client
             .post(&uri)
             .json(&body)
+            .header(reqwest::header::AUTHORIZATION, &token)
             .send()
             .await
             .expect("Failed to execute a request.");
@@ -97,7 +106,7 @@ async fn create_new_customer_return_a_400_when_data_is_invalid() {
 #[tokio::test]
 async fn create_new_customer_return_a_400_when_data_is_missing() {
     // Arrange
-    let app = spawn_app().await;
+    let app = spawn_app().await.login().await;
     let uri = format!("{}/api/v1/customers", app.address);
     let test_case = vec![
         (
@@ -114,6 +123,7 @@ async fn create_new_customer_return_a_400_when_data_is_missing() {
             "Email and phone are missing",
         ),
     ];
+    let token = "Bearer ".to_owned() + &app.jwt_token.unwrap();
 
     for (body, msg) in test_case {
         // Act
@@ -121,6 +131,7 @@ async fn create_new_customer_return_a_400_when_data_is_missing() {
             .api_client
             .post(&uri)
             .json(&body)
+            .header(reqwest::header::AUTHORIZATION, &token)
             .send()
             .await
             .expect("Failed to execute a request.");
@@ -136,7 +147,8 @@ async fn create_new_customer_return_a_400_when_data_is_missing() {
 
 #[tokio::test]
 async fn create_new_customer_return_a_400_when_customer_is_duplicate() {
-    let app = spawn_app().await;
+    // Arrange
+    let app = spawn_app().await.login().await;
     let name: String = Name().fake();
     let email: String = SafeEmail().fake();
     // let phone: String = PhoneNumber().fake();
@@ -148,12 +160,14 @@ async fn create_new_customer_return_a_400_when_customer_is_duplicate() {
         "phone": phone,
     });
     let uri = format!("{}/api/v1/customers", app.address);
+    let token = "Bearer ".to_owned() + &app.jwt_token.unwrap();
 
     // Act
     let response = app
         .api_client
         .post(&uri)
         .json(&request)
+        .header(reqwest::header::AUTHORIZATION, &token)
         .send()
         .await
         .expect("Failed to execute a request.");
@@ -165,6 +179,7 @@ async fn create_new_customer_return_a_400_when_customer_is_duplicate() {
         .api_client
         .post(&uri)
         .json(&request)
+        .header(reqwest::header::AUTHORIZATION, &token)
         .send()
         .await
         .expect("Failed to execute a request.");

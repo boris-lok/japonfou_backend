@@ -2,11 +2,11 @@ use std::net::TcpListener;
 
 use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
-
 use sqlx::types::Uuid;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 
 use japonfou::configuration::{get_configuration, DatabaseSettings};
+use japonfou::routes::LoginResponse;
 use japonfou::startup::{get_database_connection, run};
 use japonfou::utils::{JwtKey, JWT_SECRET_KEY_INSTANCE};
 
@@ -16,6 +16,36 @@ pub struct TestApp {
     pub api_client: reqwest::Client,
     pub db_pool: PgPool,
     pub test_user: TestUser,
+    pub jwt_token: Option<String>,
+}
+
+impl TestApp {
+    pub async fn login(self) -> TestApp {
+        let request = serde_json::json!({
+            "username": self.test_user.username,
+            "password": self.test_user.password,
+        });
+
+        let response = self
+            .api_client
+            .post(&format!("{}/api/v1/login", self.address))
+            .json(&request)
+            .send()
+            .await
+            .expect("Failed to make a request");
+
+        let res = response
+            .json::<LoginResponse>()
+            .await
+            .expect("login failed");
+
+        let token = res.token;
+
+        TestApp {
+            jwt_token: Some(token),
+            ..self
+        }
+    }
 }
 
 pub struct TestUser {
@@ -92,6 +122,7 @@ pub async fn spawn_app() -> TestApp {
         api_client: client,
         db_pool,
         test_user: TestUser::generate(),
+        jwt_token: None,
     };
 
     app.test_user.store(&app.db_pool).await;

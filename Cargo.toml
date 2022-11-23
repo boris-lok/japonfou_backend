@@ -16,7 +16,7 @@ name = "japonfou"
 anyhow = "1.0.66"
 argon2 = { version = "0.4.1", features = ["std"] }
 async-trait = "0.1.58"
-axum = "0.6.0-rc.4"
+axum = { version = "0.6.0-rc.4", features = ["headers"] }
 axum-extra = "0.4.0-rc.3"
 chrono = { version = "0.4.23", features = ["serde"] }
 config = "0.13.2"

@@ -33,6 +33,9 @@ impl IntoResponse for AppError {
             AppError::Auth(AuthError::InvalidCredentials(ref e)) => {
                 (StatusCode::UNAUTHORIZED, e.to_string())
             }
+            AppError::Auth(AuthError::MissingBearer(_)) => {
+                (StatusCode::UNAUTHORIZED, self.to_string())
+            }
             _ => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
         };
 
@@ -52,6 +55,8 @@ pub enum CustomerError {
 
 #[derive(thiserror::Error, Debug)]
 pub enum AuthError {
+    #[error("Missing bearer header")]
+    MissingBearer(#[source] anyhow::Error),
     #[error("Invalid credentials")]
     InvalidCredentials(#[source] anyhow::Error),
     #[error(transparent)]

@@ -6,11 +6,12 @@ use axum_extra::extract::WithRejection;
 use std::sync::Arc;
 
 use crate::errors::{AppError, CustomerError};
-use crate::routes::CustomerRepo;
+use crate::routes::{Claims, CustomerRepo};
 use axum::{Extension, Json};
 
 #[tracing::instrument(name = "Create a new customer", skip(customer_repo))]
 pub async fn create_customer_handler(
+    _: Claims,
     Extension(customer_repo): Extension<Arc<dyn CustomerRepo + Sync + Send>>,
     WithRejection(Json(payload), _): WithRejection<Json<CreateCustomer>, AppError>,
 ) -> Result<Json<NewCustomerResponse>, AppError> {

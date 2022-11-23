@@ -1,16 +1,16 @@
 use std::sync::Arc;
 
 use anyhow::Context;
-use axum::{Extension, Json};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use axum::{Extension, Json};
 use axum_extra::extract::WithRejection;
 use chrono::{Duration, Utc};
 
-use crate::authentication::{UserRepo, validate_credentials};
+use crate::authentication::{validate_credentials, UserRepo};
 use crate::errors::AppError;
-use crate::routes::Login;
 use crate::routes::login::domain::{Claims, LoginResponse};
+use crate::routes::Login;
 use crate::utils::JWT_SECRET_KEY_INSTANCE;
 
 #[tracing::instrument(skip(payload, user_repo))]
