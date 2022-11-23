@@ -1,8 +1,8 @@
 use crate::helpers::spawn_app;
 
 use japonfou::routes::{Claims, LoginResponse};
+use japonfou::utils::JWT_SECRET_KEY_INSTANCE;
 use jsonwebtoken::{Algorithm, Validation};
-use secrecy::ExposeSecret;
 
 #[tokio::test]
 async fn login_failed() {
@@ -50,10 +50,13 @@ async fn login_success() {
         .expect("Failed to parse json to `LoginResponse`");
 
     let token = data.token;
-    let _claims = jsonwebtoken::decode::<Claims>(
+    let decoding_key = JWT_SECRET_KEY_INSTANCE.get().unwrap();
+    let claims = jsonwebtoken::decode::<Claims>(
         &token,
-        &jsonwebtoken::DecodingKey::from_secret(app.jwt_secret_key.expose_secret().as_bytes()),
+        &decoding_key.decoding,
         &Validation::new(Algorithm::HS256),
     )
     .expect("Failed to decode token to claims");
+
+    assert_eq!(claims.claims.sub, app.test_user.id.to_string());
 }

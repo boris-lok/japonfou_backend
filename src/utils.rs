@@ -1,3 +1,5 @@
+use jsonwebtoken::{DecodingKey, EncodingKey};
+use once_cell::sync::OnceCell;
 use std::sync::Arc;
 
 use sqlx::pool::PoolConnection;
@@ -22,6 +24,18 @@ impl PostgresSession {
     }
 }
 
-pub async fn get_postgres_session(pool: PgPool) -> Result<PoolConnection<Postgres>, sqlx::Error> {
-    pool.acquire().await
+pub struct JwtKey {
+    pub encoding: EncodingKey,
+    pub decoding: DecodingKey,
 }
+
+impl JwtKey {
+    pub fn new(secret: &[u8]) -> Self {
+        Self {
+            encoding: EncodingKey::from_secret(secret),
+            decoding: DecodingKey::from_secret(secret),
+        }
+    }
+}
+
+pub static JWT_SECRET_KEY_INSTANCE: OnceCell<JwtKey> = OnceCell::new();

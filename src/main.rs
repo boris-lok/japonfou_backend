@@ -3,6 +3,7 @@ use std::net::TcpListener;
 use japonfou::configuration::get_configuration;
 use japonfou::startup::run;
 use japonfou::telemetry::{get_subscriber, init_subscriber};
+use japonfou::utils::{JwtKey, JWT_SECRET_KEY_INSTANCE};
 
 #[tokio::main]
 async fn main() {
@@ -10,6 +11,9 @@ async fn main() {
     init_subscriber(subscriber);
 
     let configuration = get_configuration().expect("Can't get configuration");
+
+    let _ = JWT_SECRET_KEY_INSTANCE
+        .get_or_init(|| JwtKey::new(configuration.jwt.secret_key.as_bytes()));
 
     let address = format!(
         "{}:{}",

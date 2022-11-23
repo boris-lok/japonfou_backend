@@ -2,12 +2,13 @@ use std::net::TcpListener;
 
 use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
-use secrecy::Secret;
+
 use sqlx::types::Uuid;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 
 use japonfou::configuration::{get_configuration, DatabaseSettings};
 use japonfou::startup::{get_database_connection, run};
+use japonfou::utils::{JwtKey, JWT_SECRET_KEY_INSTANCE};
 
 pub struct TestApp {
     pub address: String,
@@ -15,7 +16,6 @@ pub struct TestApp {
     pub api_client: reqwest::Client,
     pub db_pool: PgPool,
     pub test_user: TestUser,
-    pub jwt_secret_key: Secret<String>,
 }
 
 pub struct TestUser {
@@ -74,7 +74,10 @@ pub async fn spawn_app() -> TestApp {
     let address = format!("127.0.0.1:{}", configuration.application.port);
     let listener = TcpListener::bind(&address).expect("Can't bind tcp listener");
     let application_port = listener.local_addr().unwrap().port();
-    let jwt_secret_key = Secret::new(configuration.jwt.secret_key.clone());
+
+    let _ = JWT_SECRET_KEY_INSTANCE
+        .get_or_init(|| JwtKey::new(configuration.jwt.secret_key.as_bytes()));
+
     let _ = tokio::spawn(run(configuration, listener));
 
     let client = reqwest::Client::builder()
@@ -89,7 +92,6 @@ pub async fn spawn_app() -> TestApp {
         api_client: client,
         db_pool,
         test_user: TestUser::generate(),
-        jwt_secret_key,
     };
 
     app.test_user.store(&app.db_pool).await;
