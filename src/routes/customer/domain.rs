@@ -74,7 +74,9 @@ impl NewCustomer {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
-pub struct NewCustomerResponse(pub i64);
+pub struct NewCustomerResponse {
+    pub id: i64,
+}
 
 #[derive(sea_query::Iden)]
 pub enum Customers {

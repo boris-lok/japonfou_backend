@@ -36,7 +36,7 @@ async fn create_customer_works() {
     assert!(response.is_ok());
     let response = response.unwrap();
 
-    let id = response.0;
+    let id = response.id;
 
     let data_from_db = sqlx::query!(
         r#"SELECT name, email, phone FROM customers where id=$1"#,

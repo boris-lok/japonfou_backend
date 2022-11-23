@@ -34,5 +34,5 @@ pub async fn create_customer_handler(
         .await
         .context("Failed to insert a new customer in the database")?;
 
-    Ok(Json(NewCustomerResponse(id)))
+    Ok(Json(NewCustomerResponse { id }))
 }
