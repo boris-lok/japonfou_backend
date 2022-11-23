@@ -1,10 +1,11 @@
-use axum::http::Request;
 use std::net::TcpListener;
 use std::sync::Arc;
 
+use axum::http::Request;
 use axum::routing::get;
 use axum::routing::post;
 use axum::{Extension, Router};
+use secrecy::Secret;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use tower::ServiceBuilder;
@@ -14,14 +15,17 @@ use tower_http::ServiceBuilderExt;
 use tracing::Level;
 use uuid::Uuid;
 
+use crate::authentication::{PostgresUserRepoImpl, UserRepo};
 use crate::configuration::{DatabaseSettings, Settings};
 use crate::routes::{
-    create_customer_handler, health_check, CustomerRepo, PostgresCustomerRepoImpl,
+    create_customer_handler, health_check, login, CustomerRepo, PostgresCustomerRepoImpl,
 };
+use crate::utils::PostgresSession;
 
 #[derive(Clone)]
 pub struct AppState {
     pub db_pool: PgPool,
+    pub jwt_secret_key: Secret<String>,
 }
 
 #[derive(Clone)]
@@ -38,18 +42,28 @@ impl MakeRequestId for MakeRequestUuid {
 pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
     let state = AppState {
         db_pool: get_database_connection(&config.database).await,
+        jwt_secret_key: Secret::new(config.jwt.secret_key),
     };
 
-    let customer_repo = PostgresCustomerRepoImpl::new(state.db_pool.clone())
+    let customer_repo = PostgresSession::new(state.db_pool.clone())
         .await
+        .map(PostgresCustomerRepoImpl::new)
         .map(Arc::new)
-        .expect("Can't create customer repository")
+        .expect("Failed to create a customer repository.")
         as Arc<dyn CustomerRepo + Send + Sync>;
+
+    let user_repo = PostgresSession::new(state.db_pool.clone())
+        .await
+        .map(PostgresUserRepoImpl::new)
+        .map(Arc::new)
+        .expect("Failed to create a user repository")
+        as Arc<dyn UserRepo + Send + Sync>;
 
     // build our application with a route
     let app = Router::new()
         .route("/api/v1/health_check", get(health_check))
         .route("/api/v1/customers", post(create_customer_handler))
+        .route("/api/v1/login", post(login))
         .layer(
             ServiceBuilder::new()
                 .set_x_request_id(MakeRequestUuid)
@@ -64,6 +78,7 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
                 ),
         )
         .layer(Extension(customer_repo))
+        .layer(Extension(user_repo))
         .with_state(state);
 
     axum::Server::from_tcp(listener)

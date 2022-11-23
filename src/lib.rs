@@ -1,11 +1,13 @@
 use once_cell::sync::OnceCell;
 use regex::Regex;
 
+pub mod authentication;
 pub mod configuration;
 pub mod errors;
 pub mod routes;
 pub mod startup;
 pub mod telemetry;
+pub mod utils;
 
 pub fn get_phone_number_regex() -> &'static Regex {
     static INSTANCE: OnceCell<Regex> = OnceCell::new();

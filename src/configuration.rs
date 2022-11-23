@@ -5,6 +5,7 @@ use sqlx::ConnectOptions;
 pub struct Settings {
     pub application: ApplicationSettings,
     pub database: DatabaseSettings,
+    pub jwt: JwtSettings,
 }
 
 #[derive(serde::Deserialize, Debug)]
@@ -44,6 +45,11 @@ impl DatabaseSettings {
             .log_statements(tracing::log::LevelFilter::Trace)
             .to_owned()
     }
+}
+
+#[derive(serde::Deserialize, Debug)]
+pub struct JwtSettings {
+    pub secret_key: String,
 }
 
 pub enum Environment {

@@ -8,6 +8,8 @@ pub enum AppError {
     #[error(transparent)]
     Customer(#[from] CustomerError),
     #[error(transparent)]
+    Auth(#[from] AuthError),
+    #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
     #[error(transparent)]
     JsonExtractorRejection(#[from] JsonRejection),
@@ -20,7 +22,6 @@ impl IntoResponse for AppError {
             AppError::Customer(CustomerError::CustomerIsExist) => {
                 (StatusCode::CONFLICT, self.to_string())
             }
-            AppError::UnexpectedError(_) => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             AppError::JsonExtractorRejection(ref e) => match e {
                 JsonRejection::JsonDataError(_) => (StatusCode::BAD_REQUEST, self.to_string()),
                 JsonRejection::JsonSyntaxError(_) => (StatusCode::BAD_REQUEST, self.to_string()),
@@ -29,6 +30,10 @@ impl IntoResponse for AppError {
                 }
                 _ => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             },
+            AppError::Auth(AuthError::InvalidCredentials(ref e)) => {
+                (StatusCode::UNAUTHORIZED, e.to_string())
+            }
+            _ => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
         };
 
         let body = Json(serde_json::json!({ "error_message": error_message }));
@@ -43,4 +48,12 @@ pub enum CustomerError {
     BadArguments(String),
     #[error("customer is exist.")]
     CustomerIsExist,
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum AuthError {
+    #[error("Invalid credentials")]
+    InvalidCredentials(#[source] anyhow::Error),
+    #[error(transparent)]
+    UnexpectedError(#[from] anyhow::Error),
 }

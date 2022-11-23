@@ -1,14 +1,13 @@
 use std::ops::DerefMut;
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use chrono::Utc;
 use sea_query::{Expr, PostgresQueryBuilder, Query};
-use sqlx::{PgPool, Postgres, Row};
-use sqlx::pool::PoolConnection;
-use tokio::sync::Mutex;
+
+use sqlx::Row;
 
 use crate::routes::{Customers, NewCustomer, ValidEmail, ValidPhone};
+use crate::utils::PostgresSession;
 
 #[async_trait]
 pub trait CustomerRepo {
@@ -22,15 +21,11 @@ pub trait CustomerRepo {
 
 #[derive(Clone, Debug)]
 pub struct PostgresCustomerRepoImpl {
-    session: Arc<Mutex<PoolConnection<Postgres>>>,
+    pub session: PostgresSession,
 }
-
 impl PostgresCustomerRepoImpl {
-    pub async fn new(pool: PgPool) -> Result<Self, sqlx::Error> {
-        let session = pool.acquire().await?;
-        Ok(Self {
-            session: Arc::new(Mutex::new(session)),
-        })
+    pub fn new(session: PostgresSession) -> Self {
+        Self { session }
     }
 }
 
@@ -38,7 +33,7 @@ impl PostgresCustomerRepoImpl {
 impl CustomerRepo for PostgresCustomerRepoImpl {
     #[tracing::instrument(name = "Save a new customer into database", skip(self, customer))]
     async fn create(&self, customer: NewCustomer) -> Result<i64, sqlx::Error> {
-        let mut conn = self.session.lock().await;
+        let mut conn = self.session.get_session().await;
 
         let sql = {
             let id = customer.id.into();
@@ -79,7 +74,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
         email: &Option<ValidEmail>,
         phone: &Option<ValidPhone>,
     ) -> Result<bool, sqlx::Error> {
-        let mut conn = self.session.lock().await;
+        let mut conn = self.session.get_session().await;
 
         let sql = Query::select()
             .column(Customers::Id)
