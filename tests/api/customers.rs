@@ -21,20 +21,9 @@ async fn create_customer_works() {
         "email": email,
         "phone": phone,
     });
-    let uri = format!("{}/api/v1/customers", app.address);
 
     // Act
-    let response = app
-        .api_client
-        .post(&uri)
-        .header(
-            reqwest::header::AUTHORIZATION,
-            "Bearer ".to_owned() + &app.jwt_token.unwrap(),
-        )
-        .json(&request)
-        .send()
-        .await
-        .expect("Failed to execute a request.");
+    let response = app.auth_post_json("/api/v1/customers", &request).await;
 
     // Assert
     assert_eq!(response.status().as_u16(), 200);
@@ -61,7 +50,6 @@ async fn create_customer_works() {
 async fn create_new_customer_return_a_400_when_data_is_invalid() {
     // Arrange
     let app = spawn_app().await.login().await;
-    let uri = format!("{}/api/v1/customers", app.address);
     let test_case = vec![
         (
             serde_json::json!({
@@ -81,18 +69,9 @@ async fn create_new_customer_return_a_400_when_data_is_invalid() {
         ),
     ];
 
-    let token = "Bearer ".to_owned() + &app.jwt_token.unwrap();
-
     for (body, msg) in test_case {
         // Act
-        let response = app
-            .api_client
-            .post(&uri)
-            .json(&body)
-            .header(reqwest::header::AUTHORIZATION, &token)
-            .send()
-            .await
-            .expect("Failed to execute a request.");
+        let response = app.auth_post_json("/api/v1/customers", &body).await;
 
         assert_eq!(
             400,
@@ -107,7 +86,6 @@ async fn create_new_customer_return_a_400_when_data_is_invalid() {
 async fn create_new_customer_return_a_400_when_data_is_missing() {
     // Arrange
     let app = spawn_app().await.login().await;
-    let uri = format!("{}/api/v1/customers", app.address);
     let test_case = vec![
         (
             serde_json::json!({
@@ -123,18 +101,10 @@ async fn create_new_customer_return_a_400_when_data_is_missing() {
             "Email and phone are missing",
         ),
     ];
-    let token = "Bearer ".to_owned() + &app.jwt_token.unwrap();
 
     for (body, msg) in test_case {
         // Act
-        let response = app
-            .api_client
-            .post(&uri)
-            .json(&body)
-            .header(reqwest::header::AUTHORIZATION, &token)
-            .send()
-            .await
-            .expect("Failed to execute a request.");
+        let response = app.auth_post_json("/api/v1/customers", &body).await;
 
         assert_eq!(
             400,
@@ -159,30 +129,14 @@ async fn create_new_customer_return_a_400_when_customer_is_duplicate() {
         "email": email,
         "phone": phone,
     });
-    let uri = format!("{}/api/v1/customers", app.address);
-    let token = "Bearer ".to_owned() + &app.jwt_token.unwrap();
 
     // Act
-    let response = app
-        .api_client
-        .post(&uri)
-        .json(&request)
-        .header(reqwest::header::AUTHORIZATION, &token)
-        .send()
-        .await
-        .expect("Failed to execute a request.");
+    let response = app.auth_post_json("/api/v1/customers", &request).await;
 
     // Assert
     assert_eq!(response.status().as_u16(), 200);
 
-    let response = app
-        .api_client
-        .post(&uri)
-        .json(&request)
-        .header(reqwest::header::AUTHORIZATION, &token)
-        .send()
-        .await
-        .expect("Failed to execute a request.");
+    let response = app.auth_post_json("/api/v1/customers", &request).await;
 
     assert_eq!(response.status().as_u16(), 409);
 }

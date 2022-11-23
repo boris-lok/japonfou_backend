@@ -1,48 +1,41 @@
-use crate::helpers::spawn_app;
+use jsonwebtoken::{Algorithm, Validation};
 
 use japonfou::routes::{Claims, LoginResponse};
 use japonfou::utils::JWT_SECRET_KEY_INSTANCE;
-use jsonwebtoken::{Algorithm, Validation};
+
+use crate::helpers::spawn_app;
 
 #[tokio::test]
 async fn login_failed() {
+    // Arrange
     let app = spawn_app().await;
 
     let body = serde_json::json!({
         "username": "random-username",
         "password": "random-password",
     });
-    let uri = format!("{}/api/v1/login", app.address);
 
-    let response = app
-        .api_client
-        .post(&uri)
-        .json(&body)
-        .send()
-        .await
-        .expect("Failed to execute a request.");
+    // Act
+    let response = app.post_json("/api/v1/login", &body).await;
 
+    // Assert
     assert_eq!(response.status().as_u16(), 401);
 }
 
 #[tokio::test]
 async fn login_success() {
+    // Arrange
     let app = spawn_app().await;
 
     let body = serde_json::json!({
         "username": &app.test_user.username,
         "password": &app.test_user.password,
     });
-    let uri = format!("{}/api/v1/login", app.address);
 
-    let response = app
-        .api_client
-        .post(&uri)
-        .json(&body)
-        .send()
-        .await
-        .expect("Failed to execute a request.");
+    // Act
+    let response = app.post_json("/api/v1/login", &body).await;
 
+    // Assert
     assert_eq!(response.status().as_u16(), 200);
     let data: LoginResponse = response
         .json()

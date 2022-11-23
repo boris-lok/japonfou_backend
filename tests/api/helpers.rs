@@ -2,6 +2,7 @@ use std::net::TcpListener;
 
 use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
+use serde_json::Value;
 use sqlx::types::Uuid;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 
@@ -45,6 +46,33 @@ impl TestApp {
             jwt_token: Some(token),
             ..self
         }
+    }
+
+    pub async fn auth_post_json(&self, uri: &str, body: &Value) -> reqwest::Response {
+        if self.jwt_token.is_some() {
+            self.base_post_json(uri, body, true).await
+        } else {
+            panic!("Failed to make a request before login");
+        }
+    }
+
+    pub async fn post_json(&self, uri: &str, body: &Value) -> reqwest::Response {
+        self.base_post_json(uri, body, false).await
+    }
+
+    async fn base_post_json(&self, uri: &str, body: &Value, with_token: bool) -> reqwest::Response {
+        let mut header_map = reqwest::header::HeaderMap::new();
+        if with_token {
+            let token = format!("Bearer {}", self.jwt_token.as_ref().unwrap());
+            header_map.append(reqwest::header::AUTHORIZATION, token.parse().unwrap());
+        }
+        self.api_client
+            .post(&format!("{}{}", self.address, uri))
+            .json(body)
+            .headers(header_map)
+            .send()
+            .await
+            .expect("Failed to make a request")
     }
 }
 
