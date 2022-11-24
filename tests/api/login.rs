@@ -55,7 +55,9 @@ async fn login_success() {
 
     assert_eq!(claims.claims.sub, app.test_user.id.to_string());
 
-    let mut session = app.redis_client.get_connection()
+    let mut session = app
+        .redis_client
+        .get_connection()
         .expect("Failed to connect the redis");
 
     let exp_from_session: Option<usize> = session

@@ -17,7 +17,7 @@ use uuid::Uuid;
 
 use crate::configuration::{DatabaseSettings, Settings};
 use crate::repositories::{CustomerRepo, PostgresCustomerRepoImpl, PostgresUserRepoImpl, UserRepo};
-use crate::routes::{change_password, create_customer_handler, health_check, login};
+use crate::routes::{change_password, create_customer_handler, health_check, login, logout};
 use crate::utils::PostgresSession;
 
 #[derive(Clone)]
@@ -68,6 +68,7 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
         .route("/api/v1/admin/customers", post(create_customer_handler))
         .route("/api/v1/login", post(login))
         .route("/api/v1/admin/change_password", post(change_password))
+        .route("/api/v1/logout", post(logout))
         .layer(
             ServiceBuilder::new()
                 .set_x_request_id(MakeRequestUuid)

@@ -106,9 +106,18 @@ async fn change_password_works() {
     assert_eq!(response.status().as_u16(), 200);
 
     // Act 2 - Logout
-    // let app = app.logout().await;
+    let app = app.logout().await;
 
-    // Act 3 - use new password to login
+    // Act 3 - Use old information to login
+    let request_body = serde_json::json!({
+        "username": &app.test_user.username,
+        "password": &app.test_user.password
+    });
+    let response = app.post_json("/api/v1/login", &request_body).await;
+
+    assert_eq!(response.status().as_u16(), 401);
+
+    // Act 4 - use new password to login
     let login_body = serde_json::json!({
         "username": &app.test_user.username,
         "password": &new_password,
