@@ -23,7 +23,9 @@ async fn create_customer_works() {
     });
 
     // Act
-    let response = app.auth_post_json("/api/v1/customers", &request).await;
+    let response = app
+        .auth_post_json("/api/v1/admin/customers", &request)
+        .await;
 
     // Assert
     assert_eq!(response.status().as_u16(), 200);
@@ -71,7 +73,7 @@ async fn create_new_customer_return_a_400_when_data_is_invalid() {
 
     for (body, msg) in test_case {
         // Act
-        let response = app.auth_post_json("/api/v1/customers", &body).await;
+        let response = app.auth_post_json("/api/v1/admin/customers", &body).await;
 
         assert_eq!(
             400,
@@ -104,7 +106,7 @@ async fn create_new_customer_return_a_400_when_data_is_missing() {
 
     for (body, msg) in test_case {
         // Act
-        let response = app.auth_post_json("/api/v1/customers", &body).await;
+        let response = app.auth_post_json("/api/v1/admin/customers", &body).await;
 
         assert_eq!(
             400,
@@ -131,12 +133,16 @@ async fn create_new_customer_return_a_400_when_customer_is_duplicate() {
     });
 
     // Act
-    let response = app.auth_post_json("/api/v1/customers", &request).await;
+    let response = app
+        .auth_post_json("/api/v1/admin/customers", &request)
+        .await;
 
     // Assert
     assert_eq!(response.status().as_u16(), 200);
 
-    let response = app.auth_post_json("/api/v1/customers", &request).await;
+    let response = app
+        .auth_post_json("/api/v1/admin/customers", &request)
+        .await;
 
     assert_eq!(response.status().as_u16(), 409);
 }

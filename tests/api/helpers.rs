@@ -22,18 +22,14 @@ pub struct TestApp {
 
 impl TestApp {
     pub async fn login(self) -> TestApp {
-        let request = serde_json::json!({
+        let request_body = serde_json::json!({
             "username": self.test_user.username,
             "password": self.test_user.password,
         });
 
-        let response = self
-            .api_client
-            .post(&format!("{}/api/v1/login", self.address))
-            .json(&request)
-            .send()
-            .await
-            .expect("Failed to make a request");
+        let response = self.post_json("/api/v1/login", &request_body).await;
+
+        assert_eq!(response.status().as_u16(), 200);
 
         let res = response
             .json::<LoginResponse>()
@@ -44,6 +40,26 @@ impl TestApp {
 
         TestApp {
             jwt_token: Some(token),
+            ..self
+        }
+    }
+
+    pub async fn logout(self) -> TestApp {
+        let mut header_map = reqwest::header::HeaderMap::new();
+        let token = format!("Bearer {}", self.jwt_token.as_ref().unwrap());
+        header_map.append(reqwest::header::AUTHORIZATION, token.parse().unwrap());
+        let response = self
+            .api_client
+            .post(&format!("{}/api/v1/logout", self.address))
+            .headers(header_map)
+            .send()
+            .await
+            .expect("Failed to make a request");
+
+        assert_eq!(response.status().as_u16(), 200);
+
+        TestApp {
+            jwt_token: None,
             ..self
         }
     }

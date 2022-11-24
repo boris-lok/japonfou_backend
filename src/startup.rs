@@ -60,7 +60,7 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
     // build our application with a route
     let app = Router::new()
         .route("/api/v1/health_check", get(health_check))
-        .route("/api/v1/customers", post(create_customer_handler))
+        .route("/api/v1/admin/customers", post(create_customer_handler))
         .route("/api/v1/login", post(login))
         .layer(
             ServiceBuilder::new()
