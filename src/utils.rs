@@ -1,5 +1,6 @@
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use once_cell::sync::OnceCell;
+use regex::Regex;
 use std::sync::Arc;
 
 use sqlx::pool::PoolConnection;
@@ -39,3 +40,10 @@ impl JwtKey {
 }
 
 pub static JWT_SECRET_KEY_INSTANCE: OnceCell<JwtKey> = OnceCell::new();
+
+pub fn get_phone_number_regex() -> &'static Regex {
+    static INSTANCE: OnceCell<Regex> = OnceCell::new();
+    INSTANCE.get_or_init(|| {
+        Regex::new(r#"^[\\+]?[(]?[0-9]{3}[)]?[-\s\\.]?[0-9]{3}[-\s\\.]?[0-9]{4,6}$"#).unwrap()
+    })
+}

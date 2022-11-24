@@ -7,8 +7,9 @@ use axum::{Extension, Json};
 use axum_extra::extract::WithRejection;
 use chrono::{Duration, Utc};
 
-use crate::authentication::{validate_credentials, UserRepo};
+use crate::authentication::validate_credentials;
 use crate::errors::AppError;
+use crate::repositories::UserRepo;
 use crate::routes::login::domain::{Claims, LoginResponse};
 use crate::routes::Login;
 use crate::utils::JWT_SECRET_KEY_INSTANCE;

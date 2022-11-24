@@ -6,8 +6,8 @@ use argon2::{Algorithm, Argon2, Params, PasswordHash, PasswordHasher, PasswordVe
 use secrecy::{ExposeSecret, Secret};
 
 use crate::authentication::domain::Credentials;
-use crate::authentication::repo::UserRepo;
 use crate::errors::AuthError;
+use crate::repositories::UserRepo;
 use crate::telemetry::spawn_blocking_with_tracing;
 
 #[tracing::instrument(name = "Validate credentials", skip(credentials, user_repo))]

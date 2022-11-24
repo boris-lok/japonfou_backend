@@ -15,11 +15,9 @@ use tower_http::ServiceBuilderExt;
 use tracing::Level;
 use uuid::Uuid;
 
-use crate::authentication::{PostgresUserRepoImpl, UserRepo};
 use crate::configuration::{DatabaseSettings, Settings};
-use crate::routes::{
-    create_customer_handler, health_check, login, CustomerRepo, PostgresCustomerRepoImpl,
-};
+use crate::repositories::{CustomerRepo, PostgresCustomerRepoImpl, PostgresUserRepoImpl, UserRepo};
+use crate::routes::{create_customer_handler, health_check, login};
 use crate::utils::PostgresSession;
 
 #[derive(Clone)]

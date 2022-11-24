@@ -14,11 +14,3 @@ impl From<Login> for Credentials {
         }
     }
 }
-
-#[derive(sea_query::Iden)]
-pub enum Users {
-    Table,
-    Id,
-    Username,
-    PasswordHash,
-}

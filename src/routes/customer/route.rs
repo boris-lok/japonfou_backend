@@ -1,13 +1,13 @@
-use crate::routes::customer::{CreateCustomer, NewCustomer, NewCustomerResponse};
-
-use anyhow::Context;
-
-use axum_extra::extract::WithRejection;
 use std::sync::Arc;
 
-use crate::errors::{AppError, CustomerError};
-use crate::routes::{Claims, CustomerRepo};
+use anyhow::Context;
 use axum::{Extension, Json};
+use axum_extra::extract::WithRejection;
+
+use crate::errors::{AppError, CustomerError};
+use crate::repositories::CustomerRepo;
+use crate::routes::customer::{CreateCustomer, NewCustomer, NewCustomerResponse};
+use crate::routes::Claims;
 
 #[tracing::instrument(name = "Create a new customer", skip(customer_repo))]
 pub async fn create_customer_handler(

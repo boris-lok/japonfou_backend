@@ -6,9 +6,16 @@ use sea_query::{Expr, PostgresQueryBuilder, Query};
 use secrecy::{ExposeSecret, Secret};
 use sqlx::Row;
 
-use crate::authentication::domain::Users;
 use crate::errors::AuthError;
 use crate::utils::PostgresSession;
+
+#[derive(sea_query::Iden)]
+enum Users {
+    Table,
+    Id,
+    Username,
+    PasswordHash,
+}
 
 #[async_trait]
 pub trait UserRepo {

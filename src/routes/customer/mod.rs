@@ -1,14 +1,13 @@
-mod domain;
-mod repo;
-mod route;
+use std::sync::Mutex;
+
+use once_cell::sync::OnceCell;
+use snowflake::SnowflakeIdGenerator;
 
 pub use domain::*;
-use once_cell::sync::OnceCell;
-pub use repo::{CustomerRepo, PostgresCustomerRepoImpl};
 pub use route::create_customer_handler;
 
-use snowflake::SnowflakeIdGenerator;
-use std::sync::Mutex;
+mod domain;
+mod route;
 
 pub(crate) fn customer_id_generator() -> &'static Mutex<SnowflakeIdGenerator> {
     static INSTANCE: OnceCell<Mutex<SnowflakeIdGenerator>> = OnceCell::new();

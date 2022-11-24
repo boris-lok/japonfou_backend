@@ -1,5 +1,5 @@
-use crate::get_phone_number_regex;
 use crate::routes::customer_id_generator;
+use crate::utils::get_phone_number_regex;
 
 #[derive(Clone, Debug)]
 pub struct ValidEmail(pub String);
@@ -76,17 +76,4 @@ impl NewCustomer {
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct NewCustomerResponse {
     pub id: i64,
-}
-
-#[derive(sea_query::Iden)]
-pub enum Customers {
-    Table,
-    Id,
-    Name,
-    Email,
-    Phone,
-    Remark,
-    CreatedAt,
-    UpdatedAt,
-    DeletedAt,
 }

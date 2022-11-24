@@ -6,8 +6,21 @@ use sea_query::{Expr, PostgresQueryBuilder, Query};
 
 use sqlx::Row;
 
-use crate::routes::{Customers, NewCustomer, ValidEmail, ValidPhone};
+use crate::routes::{NewCustomer, ValidEmail, ValidPhone};
 use crate::utils::PostgresSession;
+
+#[derive(sea_query::Iden)]
+enum Customers {
+    Table,
+    Id,
+    Name,
+    Email,
+    Phone,
+    Remark,
+    CreatedAt,
+    UpdatedAt,
+    DeletedAt,
+}
 
 #[async_trait]
 pub trait CustomerRepo {
