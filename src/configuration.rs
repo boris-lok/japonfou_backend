@@ -1,3 +1,4 @@
+use secrecy::Secret;
 use sqlx::postgres::{PgConnectOptions, PgSslMode};
 use sqlx::ConnectOptions;
 
@@ -6,6 +7,7 @@ pub struct Settings {
     pub application: ApplicationSettings,
     pub database: DatabaseSettings,
     pub jwt: JwtSettings,
+    pub redis_uri: Secret<String>,
 }
 
 #[derive(serde::Deserialize, Debug)]

@@ -5,7 +5,7 @@ use axum::http::Request;
 use axum::routing::get;
 use axum::routing::post;
 use axum::{Extension, Router};
-use secrecy::Secret;
+use secrecy::{ExposeSecret, Secret};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use tower::ServiceBuilder;
@@ -23,6 +23,7 @@ use crate::utils::PostgresSession;
 #[derive(Clone)]
 pub struct AppState {
     pub db_pool: PgPool,
+    pub redis_client: Arc<redis::Client>,
     pub jwt_secret_key: Secret<String>,
 }
 
@@ -38,8 +39,12 @@ impl MakeRequestId for MakeRequestUuid {
 }
 
 pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
+    let client = redis::Client::open(config.redis_uri.expose_secret().as_str())
+        .expect("Failed to connect the redis");
+
     let state = AppState {
         db_pool: get_database_connection(&config.database).await,
+        redis_client: Arc::new(client),
         jwt_secret_key: Secret::new(config.jwt.secret_key),
     };
 

@@ -10,3 +10,4 @@ application:
   host: 127.0.0.1
 jwt:
   secret_key: "secret"
+redis_uri: "redis://127.0.0.1:6379"

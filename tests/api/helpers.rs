@@ -2,6 +2,7 @@ use std::net::TcpListener;
 
 use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
+use secrecy::ExposeSecret;
 use serde_json::Value;
 use sqlx::types::Uuid;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
@@ -18,6 +19,7 @@ pub struct TestApp {
     pub db_pool: PgPool,
     pub test_user: TestUser,
     pub jwt_token: Option<String>,
+    pub redis_client: redis::Client,
 }
 
 impl TestApp {
@@ -154,6 +156,9 @@ pub async fn spawn_app() -> TestApp {
     let _ = JWT_SECRET_KEY_INSTANCE
         .get_or_init(|| JwtKey::new(configuration.jwt.secret_key.as_bytes()));
 
+    let redis_client = redis::Client::open(configuration.redis_uri.expose_secret().as_str())
+        .expect("Failed to connect the redis");
+
     let _ = tokio::spawn(run(configuration, listener));
 
     let client = reqwest::Client::builder()
@@ -169,6 +174,7 @@ pub async fn spawn_app() -> TestApp {
         db_pool,
         test_user: TestUser::generate(),
         jwt_token: None,
+        redis_client,
     };
 
     app.test_user.store(&app.db_pool).await;

@@ -24,6 +24,7 @@ hyper = { version = "0.14.23", features = ["full"] }
 jsonwebtoken = "8.1.1"
 once_cell = "1.16.0"
 rand = "0.8.5"
+redis = { version = "0.22.1", features = ["tokio-comp"] }
 regex = "1.7.0"
 rs-snowflake = "0.6.0"
 sea-query = { version = "0.27.2", features = ["derive", "postgres-types", "chrono", "with-chrono"] }

@@ -35,6 +35,9 @@ impl IntoResponse for AppError {
             AppError::Auth(AuthError::InvalidCredentials(ref e)) => {
                 (StatusCode::UNAUTHORIZED, e.to_string())
             }
+            AppError::Auth(AuthError::ExpiredCredentials) => {
+                (StatusCode::UNAUTHORIZED, self.to_string())
+            }
             AppError::Auth(AuthError::MissingBearer(_)) => {
                 (StatusCode::UNAUTHORIZED, self.to_string())
             }
@@ -62,6 +65,8 @@ pub enum AuthError {
     MissingBearer(#[source] anyhow::Error),
     #[error("Invalid credentials")]
     InvalidCredentials(#[source] anyhow::Error),
+    #[error("expired credentials")]
+    ExpiredCredentials,
     #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
 }
