@@ -9,7 +9,9 @@ use crate::helpers::spawn_app;
 #[tokio::test]
 async fn create_customer_works() {
     // Arrange
-    let app = spawn_app().await.login().await;
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
     let name: String = Name().fake();
     let email: String = SafeEmail().fake();
     // let phone: String = PhoneNumber().fake();
@@ -51,7 +53,9 @@ async fn create_customer_works() {
 #[tokio::test]
 async fn create_new_customer_return_a_400_when_data_is_invalid() {
     // Arrange
-    let app = spawn_app().await.login().await;
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
     let test_case = vec![
         (
             serde_json::json!({
@@ -87,7 +91,9 @@ async fn create_new_customer_return_a_400_when_data_is_invalid() {
 #[tokio::test]
 async fn create_new_customer_return_a_400_when_data_is_missing() {
     // Arrange
-    let app = spawn_app().await.login().await;
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
     let test_case = vec![
         (
             serde_json::json!({
@@ -120,7 +126,9 @@ async fn create_new_customer_return_a_400_when_data_is_missing() {
 #[tokio::test]
 async fn create_new_customer_return_a_400_when_customer_is_duplicate() {
     // Arrange
-    let app = spawn_app().await.login().await;
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
     let name: String = Name().fake();
     let email: String = SafeEmail().fake();
     // let phone: String = PhoneNumber().fake();

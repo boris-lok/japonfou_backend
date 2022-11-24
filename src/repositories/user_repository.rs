@@ -6,7 +6,7 @@ use sea_query::{Expr, PostgresQueryBuilder, Query};
 use secrecy::{ExposeSecret, Secret};
 use sqlx::Row;
 
-use crate::errors::AuthError;
+use crate::errors::{AppError, AuthError};
 use crate::utils::PostgresSession;
 
 #[derive(sea_query::Iden)]
@@ -23,6 +23,8 @@ pub trait UserRepo {
         &self,
         username: &str,
     ) -> Result<Option<(uuid::Uuid, Secret<String>)>, anyhow::Error>;
+
+    async fn get_username(&self, user_id: &str) -> Result<String, anyhow::Error>;
 
     async fn change_password(
         &self,
@@ -66,6 +68,25 @@ impl UserRepo for PostgresUserRepoImpl {
                 let password = Secret::new(e.get::<String, usize>(1));
                 (id, password)
             });
+
+        Ok(res)
+    }
+
+    async fn get_username(&self, user_id: &str) -> Result<String, anyhow::Error> {
+        let mut conn = self.session.get_session().await;
+
+        let sql = Query::select()
+            .column(Users::Username)
+            .from(Users::Table)
+            .and_where(Expr::tbl(Users::Table, Users::Id).eq(user_id))
+            .to_string(PostgresQueryBuilder);
+
+        let res = sqlx::query(&sql)
+            .fetch_one(conn.deref_mut())
+            .await
+            .context("Failed to perform a query to retrieve a username")
+            .map_err(AppError::UnexpectedError)
+            .map(|e| e.get::<String, usize>(0))?;
 
         Ok(res)
     }

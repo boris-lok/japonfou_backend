@@ -21,13 +21,8 @@ pub struct TestApp {
 }
 
 impl TestApp {
-    pub async fn login(self) -> TestApp {
-        let request_body = serde_json::json!({
-            "username": self.test_user.username,
-            "password": self.test_user.password,
-        });
-
-        let response = self.post_json("/api/v1/login", &request_body).await;
+    pub async fn login(self, body: &Value) -> TestApp {
+        let response = self.post_json("/api/v1/login", body).await;
 
         assert_eq!(response.status().as_u16(), 200);
 
@@ -89,6 +84,13 @@ impl TestApp {
             .send()
             .await
             .expect("Failed to make a request")
+    }
+
+    pub fn login_body(&self) -> Value {
+        serde_json::json!({
+            "username": self.test_user.username,
+            "password": self.test_user.password,
+        })
     }
 }
 

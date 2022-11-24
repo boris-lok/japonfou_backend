@@ -10,6 +10,8 @@ pub enum AppError {
     #[error(transparent)]
     Auth(#[from] AuthError),
     #[error(transparent)]
+    ChangePassword(#[from] ChangePasswordError),
+    #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
     #[error(transparent)]
     JsonExtractorRejection(#[from] JsonRejection),
@@ -36,6 +38,7 @@ impl IntoResponse for AppError {
             AppError::Auth(AuthError::MissingBearer(_)) => {
                 (StatusCode::UNAUTHORIZED, self.to_string())
             }
+            AppError::ChangePassword(_) => (StatusCode::BAD_REQUEST, self.to_string()),
             _ => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
         };
 
@@ -61,4 +64,12 @@ pub enum AuthError {
     InvalidCredentials(#[source] anyhow::Error),
     #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum ChangePasswordError {
+    #[error("New password miss match")]
+    NewPasswordMissingMatch,
+    #[error("new password should be difference between old password")]
+    NewPasswordMustBeDifferent,
 }
