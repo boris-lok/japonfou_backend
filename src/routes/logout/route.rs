@@ -23,5 +23,5 @@ pub async fn logout(
         .context("Failed to clear a login session")
         .map_err(AppError::UnexpectedError)?;
 
-    Ok((StatusCode::OK, "".to_string()).into_response())
+    Ok(StatusCode::OK)
 }
