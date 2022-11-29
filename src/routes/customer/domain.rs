@@ -32,8 +32,17 @@ impl ValidPhone {
 }
 
 #[derive(serde::Deserialize, Debug)]
-pub struct CreateCustomer {
+pub struct CreateCustomerRequest {
     pub name: String,
+    pub email: Option<String>,
+    pub phone: Option<String>,
+    pub remark: Option<String>,
+}
+
+#[derive(serde::Deserialize, Debug)]
+pub struct UpdateCustomerRequest {
+    pub id: i64,
+    pub name: Option<String>,
     pub email: Option<String>,
     pub phone: Option<String>,
     pub remark: Option<String>,
@@ -48,7 +57,7 @@ pub struct NewCustomer {
 }
 
 impl NewCustomer {
-    pub async fn parse(customer: CreateCustomer) -> Result<Self, String> {
+    pub async fn parse(customer: CreateCustomerRequest) -> Result<Self, String> {
         let id = async {
             let generator = customer_id_generator();
             let mut generator = generator.lock().unwrap();
@@ -65,6 +74,29 @@ impl NewCustomer {
 
         Ok(Self {
             id,
+            name: customer.name,
+            email,
+            phone,
+            remark: customer.remark,
+        })
+    }
+}
+
+pub struct UpdateCustomer {
+    pub id: i64,
+    pub name: Option<String>,
+    pub email: Option<ValidEmail>,
+    pub phone: Option<ValidPhone>,
+    pub remark: Option<String>,
+}
+
+impl UpdateCustomer {
+    pub fn parse(customer: UpdateCustomerRequest) -> Result<Self, String> {
+        let email = customer.email.map(ValidEmail::parse).transpose()?;
+        let phone = customer.phone.map(ValidPhone::parse).transpose()?;
+
+        Ok(Self {
+            id: customer.id,
             name: customer.name,
             email,
             phone,

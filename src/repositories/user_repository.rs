@@ -52,13 +52,13 @@ impl UserRepo for PostgresUserRepoImpl {
     ) -> Result<Option<(uuid::Uuid, Secret<String>)>, anyhow::Error> {
         let mut conn = self.session.get_session().await;
 
-        let sql = Query::select()
+        let query = Query::select()
             .columns([Users::Id, Users::PasswordHash])
             .from(Users::Table)
             .and_where(Expr::tbl(Users::Table, Users::Username).eq(username))
             .to_string(PostgresQueryBuilder);
 
-        let res = sqlx::query(&sql)
+        let res = sqlx::query(&query)
             .fetch_optional(conn.deref_mut())
             .await
             .context("Failed to perform a query to retrieve stored credentials.")
@@ -75,13 +75,13 @@ impl UserRepo for PostgresUserRepoImpl {
     async fn get_username(&self, user_id: &str) -> Result<String, anyhow::Error> {
         let mut conn = self.session.get_session().await;
 
-        let sql = Query::select()
+        let query = Query::select()
             .column(Users::Username)
             .from(Users::Table)
             .and_where(Expr::tbl(Users::Table, Users::Id).eq(user_id))
             .to_string(PostgresQueryBuilder);
 
-        let res = sqlx::query(&sql)
+        let res = sqlx::query(&query)
             .fetch_one(conn.deref_mut())
             .await
             .context("Failed to perform a query to retrieve a username")
@@ -98,7 +98,7 @@ impl UserRepo for PostgresUserRepoImpl {
     ) -> Result<bool, anyhow::Error> {
         let mut conn = self.session.get_session().await;
 
-        let sql = Query::update()
+        let query = Query::update()
             .table(Users::Table)
             .values([(
                 Users::PasswordHash,
@@ -107,7 +107,7 @@ impl UserRepo for PostgresUserRepoImpl {
             .and_where(Expr::col(Users::Id).eq(id.to_string()))
             .to_string(PostgresQueryBuilder);
 
-        let res = sqlx::query(&sql)
+        let res = sqlx::query(&query)
             .execute(conn.deref_mut())
             .await
             .map(|e| e.rows_affected() == 1)?;
