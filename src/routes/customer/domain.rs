@@ -1,5 +1,6 @@
 use crate::routes::customer_id_generator;
 use crate::utils::get_phone_number_regex;
+use chrono::{DateTime, Utc};
 
 #[derive(Clone, Debug)]
 pub struct ValidEmail(pub String);
@@ -113,4 +114,16 @@ impl UpdateCustomer {
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct NewCustomerResponse {
     pub id: i64,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, sqlx::FromRow, Debug)]
+pub struct CustomerJson {
+    pub id: i64,
+    pub name: String,
+    pub email: Option<String>,
+    pub phone: Option<String>,
+    pub remark: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>,
+    pub deleted_at: Option<DateTime<Utc>>,
 }

@@ -71,36 +71,48 @@ impl AuthTestApp {
     }
 
     pub async fn post(&self, uri: &str, body: &Value) -> reqwest::Response {
-        send_json(
+        send_api_request(
             &self.api_client,
             RequestMethod::Post,
             &self.address,
             uri,
-            body,
+            Some(body),
             Some(&self.jwt_token),
         )
         .await
     }
 
     pub async fn put(&self, uri: &str, body: &Value) -> reqwest::Response {
-        send_json(
+        send_api_request(
             &self.api_client,
             RequestMethod::Put,
             &self.address,
             uri,
-            body,
+            Some(body),
             Some(&self.jwt_token),
         )
         .await
     }
 
     pub async fn delete(&self, uri: &str, body: &Value) -> reqwest::Response {
-        send_json(
+        send_api_request(
             &self.api_client,
             RequestMethod::Delete,
             &self.address,
             uri,
-            body,
+            Some(body),
+            Some(&self.jwt_token),
+        )
+        .await
+    }
+
+    pub async fn get(&self, uri: &str) -> reqwest::Response {
+        send_api_request(
+            &self.api_client,
+            RequestMethod::Get,
+            &self.address,
+            uri,
+            None,
             Some(&self.jwt_token),
         )
         .await
@@ -141,12 +153,12 @@ impl TestApp {
     }
 
     pub async fn post(&self, uri: &str, body: &Value) -> reqwest::Response {
-        send_json(
+        send_api_request(
             &self.api_client,
             RequestMethod::Post,
             &self.address,
             uri,
-            body,
+            Some(body),
             None,
         )
         .await
@@ -160,12 +172,12 @@ impl TestApp {
     }
 }
 
-async fn send_json(
+async fn send_api_request(
     client: &reqwest::Client,
     method: RequestMethod,
     address: &str,
     uri: &str,
-    body: &Value,
+    body: Option<&Value>,
     token: Option<&str>,
 ) -> reqwest::Response {
     let mut header_map = reqwest::header::HeaderMap::new();
@@ -181,8 +193,12 @@ async fn send_json(
         RequestMethod::Delete => client.delete(&uri),
     };
 
+    let builder = match body {
+        None => builder,
+        Some(body) => builder.json(body),
+    };
+
     builder
-        .json(body)
         .headers(header_map)
         .send()
         .await

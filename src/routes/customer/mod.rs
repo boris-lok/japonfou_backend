@@ -4,7 +4,9 @@ use once_cell::sync::OnceCell;
 use snowflake::SnowflakeIdGenerator;
 
 pub use domain::*;
-pub use route::{create_customer_handler, delete_customer_handler, update_customer_handler};
+pub use route::{
+    create_customer_handler, delete_customer_handler, get_customer_handler, update_customer_handler,
+};
 
 mod domain;
 mod route;

@@ -1,6 +1,8 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use anyhow::Context;
+use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::{Extension, Json};
@@ -91,4 +93,31 @@ pub async fn delete_customer_handler(
         .context("Failed to delete a customer in the database")?;
 
     Ok(StatusCode::OK)
+}
+
+#[tracing::instrument(name = "Get a customer", skip(customer_repo, claims), fields(user_id=tracing::field::Empty))]
+pub async fn get_customer_handler(
+    claims: Claims,
+    Extension(customer_repo): Extension<Arc<dyn CustomerRepo + Send + Sync>>,
+    Path(params): Path<HashMap<String, String>>,
+) -> Result<impl IntoResponse, AppError> {
+    tracing::Span::current().record("user_id", tracing::field::display(&claims.sub));
+    let customer_id = params.get("id").and_then(|e| e.parse::<i64>().ok());
+
+    if customer_id.is_none() {
+        return Err(CustomerError::BadArguments(
+            "There is no customer id in the query string".to_string(),
+        ))?;
+    }
+
+    let customer_json = customer_repo
+        .get(customer_id.unwrap())
+        .await
+        .map(|e| e.map(Json))
+        .context("Failed to get a customer from database")?;
+
+    Ok(match customer_json {
+        None => StatusCode::OK.into_response(),
+        Some(json) => json.into_response(),
+    })
 }

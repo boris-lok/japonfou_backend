@@ -7,8 +7,8 @@ create table customers
     email      varchar(1024),
     phone      varchar(32),
     remark     text,
-    created_at timestamp without time zone not null,
-    updated_at timestamp without time zone,
-    deleted_at timestamp without time zone,
+    created_at TIMESTAMPTZ  not null,
+    updated_at TIMESTAMPTZ,
+    deleted_at TIMESTAMPTZ,
     PRIMARY KEY (id)
 );

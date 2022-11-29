@@ -2,7 +2,7 @@ use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
 use fake::Fake;
 
-use japonfou::routes::NewCustomerResponse;
+use japonfou::routes::{CustomerJson, NewCustomerResponse};
 
 use crate::helpers::spawn_app;
 
@@ -169,9 +169,7 @@ async fn update_customer_works() {
         "phone": phone,
     });
 
-    let response = app
-        .put("/api/v1/admin/customers", &update_request)
-        .await;
+    let response = app.put("/api/v1/admin/customers", &update_request).await;
 
     // Assert
     assert_eq!(response.status().as_u16(), 200);
@@ -317,13 +315,58 @@ async fn delete_customer_works() {
     // Assert
     assert_eq!(response.status().as_u16(), 200);
 
-    let data_from_db = sqlx::query!(
-        r#"SELECT deleted_at FROM customers where id=$1"#,
-        id
-    )
+    let data_from_db = sqlx::query!(r#"SELECT deleted_at FROM customers where id=$1"#, id)
         .fetch_one(&app.db_pool)
         .await
         .expect("Failed to fetch saved customer");
 
     assert!(data_from_db.deleted_at.is_some());
+}
+
+#[tokio::test]
+async fn get_customer_works() {
+    // Arrange
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
+    let id = app.create_a_new_customer().await;
+
+    // Act
+    let uri = format!("/api/v1/admin/customers/{id}");
+    let response = app.get(&uri).await;
+
+    assert_eq!(response.status().as_u16(), 200);
+
+    let data: CustomerJson = response.json().await.expect("Failed to decode json");
+
+    let data_from_db =
+        sqlx::query_as::<_, CustomerJson>(r#"SELECT * FROM customers where id=$1; "#)
+            .bind(id)
+            .fetch_one(&app.db_pool)
+            .await
+            .expect("Failed to fetch saved customer");
+
+    assert_eq!(data_from_db.id, data.id);
+    assert_eq!(data_from_db.name, data.name);
+    assert_eq!(data_from_db.email, data.email);
+    assert_eq!(data_from_db.phone, data.phone);
+    assert_eq!(data_from_db.remark, data.remark);
+    assert_eq!(data_from_db.created_at, data.created_at);
+    assert_eq!(data_from_db.updated_at, data.updated_at);
+    assert_eq!(data_from_db.deleted_at, data.deleted_at);
+}
+
+#[tokio::test]
+async fn get_customer_return_a_400_when_id_is_invalid() {
+    // Arrange
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
+    let id = app.create_a_new_customer().await;
+
+    // Act
+    let uri = format!("/api/v1/admin/customers/haha_{id}");
+    let response = app.get(&uri).await;
+
+    assert_eq!(response.status().as_u16(), 400);
 }

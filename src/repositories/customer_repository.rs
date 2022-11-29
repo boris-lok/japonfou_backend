@@ -6,7 +6,7 @@ use sea_query::{Expr, PostgresQueryBuilder, Query};
 
 use sqlx::{Error, Row};
 
-use crate::routes::{NewCustomer, UpdateCustomer, ValidEmail, ValidPhone};
+use crate::routes::{CustomerJson, NewCustomer, UpdateCustomer, ValidEmail, ValidPhone};
 use crate::utils::PostgresSession;
 
 #[derive(sea_query::Iden)]
@@ -24,6 +24,8 @@ enum Customers {
 
 #[async_trait]
 pub trait CustomerRepo {
+    async fn get(&self, customer_id: i64) -> Result<Option<CustomerJson>, Error>;
+
     async fn create(&self, customer: NewCustomer) -> Result<i64, Error>;
 
     async fn update(&self, customer: UpdateCustomer) -> Result<(), Error>;
@@ -50,6 +52,29 @@ impl PostgresCustomerRepoImpl {
 
 #[async_trait]
 impl CustomerRepo for PostgresCustomerRepoImpl {
+    #[tracing::instrument(name = "get a customer from database", skip(self))]
+    async fn get(&self, customer_id: i64) -> Result<Option<CustomerJson>, Error> {
+        let mut conn = self.session.get_session().await;
+        let query = Query::select()
+            .from(Customers::Table)
+            .columns([
+                Customers::Id,
+                Customers::Name,
+                Customers::Email,
+                Customers::Phone,
+                Customers::Remark,
+                Customers::CreatedAt,
+                Customers::UpdatedAt,
+                Customers::DeletedAt,
+            ])
+            .and_where(Expr::tbl(Customers::Table, Customers::Id).eq(customer_id))
+            .to_string(PostgresQueryBuilder);
+
+        sqlx::query_as::<_, CustomerJson>(dbg!(&query))
+            .fetch_optional(conn.deref_mut())
+            .await
+    }
+
     #[tracing::instrument(name = "Save a new customer into database", skip(self, customer))]
     async fn create(&self, customer: NewCustomer) -> Result<i64, sqlx::Error> {
         let mut conn = self.session.get_session().await;
