@@ -64,15 +64,26 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
         .expect("Failed to create a user repository")
         as Arc<dyn UserRepo + Send + Sync>;
 
+    let customer_routes = Router::new()
+        .route("/customers", post(create_customer_handler))
+        .route("/customers", put(update_customer_handler))
+        .route("/customers", delete(delete_customer_handler));
+
+    let change_password_route = Router::new().route("/change_password", post(change_password));
+
+    let admin_routes = Router::new()
+        .merge(customer_routes)
+        .merge(change_password_route);
+
+    let authorization_routes = Router::new()
+        .route("/login", post(login))
+        .route("/logout", post(logout));
+
     // build our application with a route
     let app = Router::new()
         .route("/api/v1/health_check", get(health_check))
-        .route("/api/v1/admin/customers", post(create_customer_handler))
-        .route("/api/v1/admin/customers", put(update_customer_handler))
-        .route("/api/v1/admin/customers", delete(delete_customer_handler))
-        .route("/api/v1/login", post(login))
-        .route("/api/v1/admin/change_password", post(change_password))
-        .route("/api/v1/logout", post(logout))
+        .nest("/api/:version/admin", admin_routes)
+        .nest("/api/:version", authorization_routes)
         .layer(
             ServiceBuilder::new()
                 .set_x_request_id(MakeRequestUuid)
