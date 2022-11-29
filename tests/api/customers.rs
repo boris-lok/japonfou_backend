@@ -25,9 +25,7 @@ async fn create_customer_works() {
     });
 
     // Act
-    let response = app
-        .auth_post_json("/api/v1/admin/customers", &request)
-        .await;
+    let response = app.post_json("/api/v1/admin/customers", &request).await;
 
     // Assert
     assert_eq!(response.status().as_u16(), 200);
@@ -77,7 +75,7 @@ async fn create_new_customer_return_a_400_when_data_is_invalid() {
 
     for (body, msg) in test_case {
         // Act
-        let response = app.auth_post_json("/api/v1/admin/customers", &body).await;
+        let response = app.post_json("/api/v1/admin/customers", &body).await;
 
         assert_eq!(
             400,
@@ -112,7 +110,7 @@ async fn create_new_customer_return_a_400_when_data_is_missing() {
 
     for (body, msg) in test_case {
         // Act
-        let response = app.auth_post_json("/api/v1/admin/customers", &body).await;
+        let response = app.post_json("/api/v1/admin/customers", &body).await;
 
         assert_eq!(
             400,
@@ -141,16 +139,163 @@ async fn create_new_customer_return_a_400_when_customer_is_duplicate() {
     });
 
     // Act
+    let response = app.post_json("/api/v1/admin/customers", &request).await;
+
+    // Assert
+    assert_eq!(response.status().as_u16(), 200);
+
+    let response = app.post_json("/api/v1/admin/customers", &request).await;
+
+    assert_eq!(response.status().as_u16(), 409);
+}
+
+#[tokio::test]
+async fn update_customer_works() {
+    // Arrange
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
+    let id = app.create_a_new_customer().await;
+
+    // Act 2 - Update a customer
+    let name: String = Name().fake();
+    let email: String = SafeEmail().fake();
+    let phone = "(853) 87654321".to_string();
+
+    let update_request = serde_json::json!({
+        "id": id,
+        "name": name,
+        "email": email,
+        "phone": phone,
+    });
+
     let response = app
-        .auth_post_json("/api/v1/admin/customers", &request)
+        .put_json("/api/v1/admin/customers", &update_request)
         .await;
 
     // Assert
     assert_eq!(response.status().as_u16(), 200);
 
-    let response = app
-        .auth_post_json("/api/v1/admin/customers", &request)
-        .await;
+    let data_from_db = sqlx::query!(
+        r#"SELECT name, email, phone FROM customers where id=$1"#,
+        id
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .expect("Failed to fetch saved customer");
 
+    assert_eq!(data_from_db.email, Some(email));
+    assert_eq!(data_from_db.name, name);
+    assert_eq!(data_from_db.phone, Some(phone));
+}
+
+#[tokio::test]
+async fn update_customer_return_a_400_when_data_is_invalid() {
+    // Arrange
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
+
+    let id = app.create_a_new_customer().await;
+
+    // Act 2 - Update a customer
+    let test_case = vec![
+        (
+            serde_json::json!({
+                "id": id,
+                "name": "boris",
+                "email": "123456789",
+                "phone": "123456789",
+            }),
+            "Email is invalid",
+        ),
+        (
+            serde_json::json!({
+                "id": id,
+                "name": "boris",
+                "email": "boris.lok@outlook.com",
+                "phone": "adfadfa",
+            }),
+            "Phone is invalid",
+        ),
+    ];
+
+    for (body, msg) in test_case {
+        let response = app.put_json("/api/v1/admin/customers", &body).await;
+
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            "The API didn't fail with 400 Bad Request when the payload was {}",
+            msg
+        );
+    }
+}
+
+#[tokio::test]
+async fn update_customer_return_409_when_data_conflict_with_existing_email_or_phone() {
+    // Arrange
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
+
+    let a_id = app.create_a_new_customer().await;
+    let b_id = app.create_a_new_customer().await;
+
+    let data_from_db = sqlx::query!(
+        r#"SELECT name, email, phone FROM customers where id=$1"#,
+        a_id
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .expect("Failed to fetch saved customer");
+
+    // Act - Use `A` information to update `B`
+    let request = serde_json::json!({
+        "id": b_id,
+        "email": data_from_db.email
+    });
+
+    let response = app.put_json("/api/v1/admin/customers", &request).await;
     assert_eq!(response.status().as_u16(), 409);
+
+    let request = serde_json::json!({
+        "id": b_id,
+        "phone": data_from_db.phone
+    });
+    let response = app.put_json("/api/v1/admin/customers", &request).await;
+    assert_eq!(response.status().as_u16(), 409);
+}
+
+#[tokio::test]
+async fn update_customer_works_when_using_the_same_email_or_phone() {
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
+
+    let id = app.create_a_new_customer().await;
+
+    let data_from_db = sqlx::query!(
+        r#"SELECT name, email, phone FROM customers where id=$1"#,
+        id
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .expect("Failed to fetch saved customer");
+
+    // Act - Use `A` information to update `A`
+    let request = serde_json::json!({
+        "id": id,
+        "email": data_from_db.email
+    });
+
+    let response = app.put_json("/api/v1/admin/customers", &request).await;
+    assert_eq!(response.status().as_u16(), 200);
+
+    let request = serde_json::json!({
+        "id": id,
+        "phone": data_from_db.phone
+    });
+    let response = app.put_json("/api/v1/admin/customers", &request).await;
+    assert_eq!(response.status().as_u16(), 200);
 }

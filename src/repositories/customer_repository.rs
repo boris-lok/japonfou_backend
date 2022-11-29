@@ -24,15 +24,16 @@ enum Customers {
 
 #[async_trait]
 pub trait CustomerRepo {
-    async fn create(&self, customer: NewCustomer) -> Result<i64, sqlx::Error>;
+    async fn create(&self, customer: NewCustomer) -> Result<i64, Error>;
 
-    async fn update(&self, customer: UpdateCustomer) -> Result<(), sqlx::Error>;
+    async fn update(&self, customer: UpdateCustomer) -> Result<(), Error>;
 
     async fn check_if_customer_is_exist(
         &self,
+        id: &Option<i64>,
         email: &Option<ValidEmail>,
         phone: &Option<ValidPhone>,
-    ) -> Result<bool, sqlx::Error>;
+    ) -> Result<bool, Error>;
 }
 
 #[derive(Clone, Debug)]
@@ -124,6 +125,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
     )]
     async fn check_if_customer_is_exist(
         &self,
+        id: &Option<i64>,
         email: &Option<ValidEmail>,
         phone: &Option<ValidPhone>,
     ) -> Result<bool, sqlx::Error> {
@@ -142,6 +144,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
                     .as_ref()
                     .map(|e| Expr::tbl(Customers::Table, Customers::Phone).eq(&*e.0)),
             )
+            .and_where_option(id.map(|e| Expr::tbl(Customers::Table, Customers::Id).ne(e)))
             .to_string(PostgresQueryBuilder);
 
         sqlx::query(dbg!(&query))

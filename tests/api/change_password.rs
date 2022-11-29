@@ -37,7 +37,7 @@ async fn new_password_fields_must_match() {
 
     // Act
     let response = app
-        .auth_post_json("/api/v1/admin/change_password", &request_body)
+        .post_json("/api/v1/admin/change_password", &request_body)
         .await;
 
     assert_eq!(response.status().as_u16(), 400);
@@ -59,7 +59,7 @@ async fn current_password_must_be_valid() {
 
     // Act
     let response = app
-        .auth_post_json("/api/v1/admin/change_password", &request_body)
+        .post_json("/api/v1/admin/change_password", &request_body)
         .await;
 
     assert_eq!(response.status().as_u16(), 401);
@@ -79,7 +79,7 @@ async fn current_password_must_be_different_between_new_password() {
 
     // Act
     let response = app
-        .auth_post_json("/api/v1/admin/change_password", &request_body)
+        .post_json("/api/v1/admin/change_password", &request_body)
         .await;
 
     assert_eq!(response.status().as_u16(), 400);
@@ -100,7 +100,7 @@ async fn change_password_works() {
 
     // Act 1 - Change password
     let response = app
-        .auth_post_json("/api/v1/admin/change_password", &request_body)
+        .post_json("/api/v1/admin/change_password", &request_body)
         .await;
 
     assert_eq!(response.status().as_u16(), 200);

@@ -26,7 +26,7 @@ pub async fn create_customer_handler(
     let phone = &new_customer.phone;
 
     if customer_repo
-        .check_if_customer_is_exist(email, phone)
+        .check_if_customer_is_exist(&None, email, phone)
         .await
         .context("Failed to execute a sql to check if customer is exist")?
     {
@@ -56,7 +56,7 @@ pub async fn update_customer_handler(
 
     if (email.is_some() || phone.is_some())
         && customer_repo
-            .check_if_customer_is_exist(email, phone)
+            .check_if_customer_is_exist(&Some(update_customer.id), email, phone)
             .await
             .context("Failed to execute a sql to check if customer is exist")?
     {
