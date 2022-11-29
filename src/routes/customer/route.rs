@@ -9,7 +9,7 @@ use axum_extra::extract::WithRejection;
 use crate::errors::{AppError, CustomerError};
 use crate::repositories::CustomerRepo;
 use crate::routes::customer::{CreateCustomerRequest, NewCustomer, NewCustomerResponse};
-use crate::routes::{Claims, UpdateCustomer, UpdateCustomerRequest};
+use crate::routes::{Claims, DeleteCustomerRequest, UpdateCustomer, UpdateCustomerRequest};
 
 #[tracing::instrument(name = "Create a new customer", skip(customer_repo, claims), fields(user_id=tracing::field::Empty))]
 pub async fn create_customer_handler(
@@ -74,6 +74,21 @@ pub async fn update_customer_handler(
             .await
             .context("Failed to update a customer in the database")?;
     }
+
+    Ok(StatusCode::OK)
+}
+
+#[tracing::instrument(name = "Delete a customer", skip(customer_repo, claims), fields(user_id=tracing::field::Empty))]
+pub async fn delete_customer_handler(
+    claims: Claims,
+    Extension(customer_repo): Extension<Arc<dyn CustomerRepo + Send + Sync>>,
+    WithRejection(Json(payload), _): WithRejection<Json<DeleteCustomerRequest>, AppError>,
+) -> Result<impl IntoResponse, AppError> {
+    tracing::Span::current().record("user_id", tracing::field::display(&claims.sub));
+    customer_repo
+        .delete(payload.id)
+        .await
+        .context("Failed to delete a customer in the database")?;
 
     Ok(StatusCode::OK)
 }

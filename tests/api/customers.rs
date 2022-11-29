@@ -25,7 +25,7 @@ async fn create_customer_works() {
     });
 
     // Act
-    let response = app.post_json("/api/v1/admin/customers", &request).await;
+    let response = app.post("/api/v1/admin/customers", &request).await;
 
     // Assert
     assert_eq!(response.status().as_u16(), 200);
@@ -75,7 +75,7 @@ async fn create_new_customer_return_a_400_when_data_is_invalid() {
 
     for (body, msg) in test_case {
         // Act
-        let response = app.post_json("/api/v1/admin/customers", &body).await;
+        let response = app.post("/api/v1/admin/customers", &body).await;
 
         assert_eq!(
             400,
@@ -110,7 +110,7 @@ async fn create_new_customer_return_a_400_when_data_is_missing() {
 
     for (body, msg) in test_case {
         // Act
-        let response = app.post_json("/api/v1/admin/customers", &body).await;
+        let response = app.post("/api/v1/admin/customers", &body).await;
 
         assert_eq!(
             400,
@@ -139,12 +139,12 @@ async fn create_new_customer_return_a_400_when_customer_is_duplicate() {
     });
 
     // Act
-    let response = app.post_json("/api/v1/admin/customers", &request).await;
+    let response = app.post("/api/v1/admin/customers", &request).await;
 
     // Assert
     assert_eq!(response.status().as_u16(), 200);
 
-    let response = app.post_json("/api/v1/admin/customers", &request).await;
+    let response = app.post("/api/v1/admin/customers", &request).await;
 
     assert_eq!(response.status().as_u16(), 409);
 }
@@ -170,7 +170,7 @@ async fn update_customer_works() {
     });
 
     let response = app
-        .put_json("/api/v1/admin/customers", &update_request)
+        .put("/api/v1/admin/customers", &update_request)
         .await;
 
     // Assert
@@ -221,7 +221,7 @@ async fn update_customer_return_a_400_when_data_is_invalid() {
     ];
 
     for (body, msg) in test_case {
-        let response = app.put_json("/api/v1/admin/customers", &body).await;
+        let response = app.put("/api/v1/admin/customers", &body).await;
 
         assert_eq!(
             400,
@@ -256,14 +256,14 @@ async fn update_customer_return_409_when_data_conflict_with_existing_email_or_ph
         "email": data_from_db.email
     });
 
-    let response = app.put_json("/api/v1/admin/customers", &request).await;
+    let response = app.put("/api/v1/admin/customers", &request).await;
     assert_eq!(response.status().as_u16(), 409);
 
     let request = serde_json::json!({
         "id": b_id,
         "phone": data_from_db.phone
     });
-    let response = app.put_json("/api/v1/admin/customers", &request).await;
+    let response = app.put("/api/v1/admin/customers", &request).await;
     assert_eq!(response.status().as_u16(), 409);
 }
 
@@ -289,13 +289,41 @@ async fn update_customer_works_when_using_the_same_email_or_phone() {
         "email": data_from_db.email
     });
 
-    let response = app.put_json("/api/v1/admin/customers", &request).await;
+    let response = app.put("/api/v1/admin/customers", &request).await;
     assert_eq!(response.status().as_u16(), 200);
 
     let request = serde_json::json!({
         "id": id,
         "phone": data_from_db.phone
     });
-    let response = app.put_json("/api/v1/admin/customers", &request).await;
+    let response = app.put("/api/v1/admin/customers", &request).await;
     assert_eq!(response.status().as_u16(), 200);
+}
+
+#[tokio::test]
+async fn delete_customer_works() {
+    // Arrange
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
+    let id = app.create_a_new_customer().await;
+    let request = serde_json::json!({
+        "id": id,
+    });
+
+    // Act
+    let response = app.delete("/api/v1/admin/customers", &request).await;
+
+    // Assert
+    assert_eq!(response.status().as_u16(), 200);
+
+    let data_from_db = sqlx::query!(
+        r#"SELECT deleted_at FROM customers where id=$1"#,
+        id
+    )
+        .fetch_one(&app.db_pool)
+        .await
+        .expect("Failed to fetch saved customer");
+
+    assert!(data_from_db.deleted_at.is_some());
 }

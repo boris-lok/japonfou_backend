@@ -2,7 +2,7 @@ use std::net::TcpListener;
 use std::sync::Arc;
 
 use axum::http::Request;
-use axum::routing::{get, post, put};
+use axum::routing::{delete, get, post, put};
 use axum::{Extension, Router};
 use secrecy::{ExposeSecret, Secret};
 use sqlx::postgres::PgPoolOptions;
@@ -17,7 +17,8 @@ use uuid::Uuid;
 use crate::configuration::{DatabaseSettings, Settings};
 use crate::repositories::{CustomerRepo, PostgresCustomerRepoImpl, PostgresUserRepoImpl, UserRepo};
 use crate::routes::{
-    change_password, create_customer_handler, health_check, login, logout, update_customer_handler,
+    change_password, create_customer_handler, delete_customer_handler, health_check, login, logout,
+    update_customer_handler,
 };
 use crate::utils::PostgresSession;
 
@@ -68,6 +69,7 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
         .route("/api/v1/health_check", get(health_check))
         .route("/api/v1/admin/customers", post(create_customer_handler))
         .route("/api/v1/admin/customers", put(update_customer_handler))
+        .route("/api/v1/admin/customers", delete(delete_customer_handler))
         .route("/api/v1/login", post(login))
         .route("/api/v1/admin/change_password", post(change_password))
         .route("/api/v1/logout", post(logout))

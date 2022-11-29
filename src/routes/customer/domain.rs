@@ -48,6 +48,11 @@ pub struct UpdateCustomerRequest {
     pub remark: Option<String>,
 }
 
+#[derive(serde::Deserialize, Debug)]
+pub struct DeleteCustomerRequest {
+    pub id: i64,
+}
+
 pub struct NewCustomer {
     pub id: i64,
     pub name: String,

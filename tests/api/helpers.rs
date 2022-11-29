@@ -62,7 +62,7 @@ impl AuthTestApp {
             "phone": phone,
         });
 
-        let response = self.post_json("/api/v1/admin/customers", &request).await;
+        let response = self.post("/api/v1/admin/customers", &request).await;
         assert_eq!(response.status().as_u16(), 200);
         let response: Result<NewCustomerResponse, reqwest::Error> = response.json().await;
         assert!(response.is_ok());
@@ -70,7 +70,7 @@ impl AuthTestApp {
         response.id
     }
 
-    pub async fn post_json(&self, uri: &str, body: &Value) -> reqwest::Response {
+    pub async fn post(&self, uri: &str, body: &Value) -> reqwest::Response {
         send_json(
             &self.api_client,
             RequestMethod::Post,
@@ -82,10 +82,22 @@ impl AuthTestApp {
         .await
     }
 
-    pub async fn put_json(&self, uri: &str, body: &Value) -> reqwest::Response {
+    pub async fn put(&self, uri: &str, body: &Value) -> reqwest::Response {
         send_json(
             &self.api_client,
             RequestMethod::Put,
+            &self.address,
+            uri,
+            body,
+            Some(&self.jwt_token),
+        )
+        .await
+    }
+
+    pub async fn delete(&self, uri: &str, body: &Value) -> reqwest::Response {
+        send_json(
+            &self.api_client,
+            RequestMethod::Delete,
             &self.address,
             uri,
             body,
@@ -106,7 +118,7 @@ pub struct TestApp {
 
 impl TestApp {
     pub async fn login(self, body: &Value) -> AuthTestApp {
-        let response = self.post_json("/api/v1/login", body).await;
+        let response = self.post("/api/v1/login", body).await;
 
         assert_eq!(response.status().as_u16(), 200);
 
@@ -128,7 +140,7 @@ impl TestApp {
         }
     }
 
-    pub async fn post_json(&self, uri: &str, body: &Value) -> reqwest::Response {
+    pub async fn post(&self, uri: &str, body: &Value) -> reqwest::Response {
         send_json(
             &self.api_client,
             RequestMethod::Post,

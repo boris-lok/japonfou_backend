@@ -28,6 +28,8 @@ pub trait CustomerRepo {
 
     async fn update(&self, customer: UpdateCustomer) -> Result<(), Error>;
 
+    async fn delete(&self, id: i64) -> Result<(), Error>;
+
     async fn check_if_customer_is_exist(
         &self,
         id: &Option<i64>,
@@ -115,6 +117,21 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
         };
 
         let _ = sqlx::query(dbg!(&query)).execute(conn.deref_mut()).await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(name = "mark a customer deleted_at in database", skip(self))]
+    async fn delete(&self, id: i64) -> Result<(), Error> {
+        let mut conn = self.session.get_session().await;
+
+        let query = Query::update()
+            .table(Customers::Table)
+            .values([(Customers::DeletedAt, Utc::now().into())])
+            .and_where(Expr::tbl(Customers::Table, Customers::Id).eq(id))
+            .to_string(PostgresQueryBuilder);
+
+        let _ = sqlx::query(dbg!(&query)).execute(conn.deref_mut()).await;
 
         Ok(())
     }

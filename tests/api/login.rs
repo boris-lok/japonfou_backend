@@ -18,7 +18,7 @@ async fn login_failed() {
     });
 
     // Act
-    let response = app.post_json("/api/v1/login", &body).await;
+    let response = app.post("/api/v1/login", &body).await;
 
     // Assert
     assert_eq!(response.status().as_u16(), 401);
@@ -35,7 +35,7 @@ async fn login_success() {
     });
 
     // Act
-    let response = app.post_json("/api/v1/login", &body).await;
+    let response = app.post("/api/v1/login", &body).await;
 
     // Assert
     assert_eq!(response.status().as_u16(), 200);
