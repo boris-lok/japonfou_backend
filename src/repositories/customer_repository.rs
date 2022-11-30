@@ -189,6 +189,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
                 Customers::Remark,
                 Customers::CreatedAt,
                 Customers::UpdatedAt,
+                Customers::DeletedAt,
             ])
             .and_where_option(
                 keyword
@@ -209,9 +210,11 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
             .limit(page_size)
             .to_string(PostgresQueryBuilder);
 
-        sqlx::query_as::<_, CustomerJson>(&query)
-            .fetch_all(conn.deref_mut())
-            .await
+        dbg!(
+            sqlx::query_as::<_, CustomerJson>(dbg!(&query))
+                .fetch_all(conn.deref_mut())
+                .await
+        )
     }
 
     #[tracing::instrument(

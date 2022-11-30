@@ -2,7 +2,7 @@ use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
 use fake::Fake;
 
-use japonfou::routes::{CustomerJson, NewCustomerResponse};
+use japonfou::routes::{CustomerJson, ListCustomersResponse, NewCustomerResponse};
 
 use crate::helpers::spawn_app;
 
@@ -369,4 +369,28 @@ async fn get_customer_return_a_400_when_id_is_invalid() {
     let response = app.get(&uri).await;
 
     assert_eq!(response.status().as_u16(), 400);
+}
+
+#[tokio::test]
+async fn list_customers_works() {
+    // Arrange
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
+
+    let mut expected_ids = vec![];
+
+    for _ in 0..20 {
+        expected_ids.push(app.create_a_new_customer().await);
+    }
+
+    // Act
+    let uri = format!("/api/v1/admin/customers");
+    let response = app.get(&uri).await;
+
+    assert_eq!(response.status().as_u16(), 200);
+    let response = response.json::<ListCustomersResponse>().await;
+    assert!(response.is_ok());
+    let data = response.unwrap();
+    assert_eq!(data.data.len(), 20);
 }

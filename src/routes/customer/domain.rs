@@ -136,9 +136,9 @@ pub struct ListCustomersRequest {
     pub page_size: Option<u64>,
 }
 
-#[derive(serde::Serialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct ListCustomersResponse {
-    pub(crate) data: Vec<CustomerJson>,
+    pub data: Vec<CustomerJson>,
 }
 
 #[derive(serde::Deserialize, Default)]
