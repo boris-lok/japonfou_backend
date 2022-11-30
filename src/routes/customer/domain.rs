@@ -1,5 +1,6 @@
 use crate::routes::customer_id_generator;
 use crate::utils::get_phone_number_regex;
+
 use chrono::{DateTime, Utc};
 
 #[derive(Clone, Debug)]
@@ -126,4 +127,29 @@ pub struct CustomerJson {
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
     pub deleted_at: Option<DateTime<Utc>>,
+}
+
+#[derive(serde::Deserialize, Debug)]
+pub struct ListCustomersRequest {
+    pub keyword: Option<String>,
+    pub page: Option<u64>,
+    pub page_size: Option<u64>,
+}
+
+#[derive(serde::Serialize, Debug)]
+pub struct ListCustomersResponse {
+    pub(crate) data: Vec<CustomerJson>,
+}
+
+#[derive(serde::Deserialize, Default)]
+pub struct CustomerSearchParameters {
+    pub id: Option<i64>,
+    #[serde(rename(deserialize = "name"))]
+    pub partial_name: Option<String>,
+    #[serde(rename(deserialize = "email"))]
+    pub partial_email: Option<String>,
+    #[serde(rename(deserialize = "phone"))]
+    pub partial_phone: Option<String>,
+    #[serde(rename(deserialize = "remark"))]
+    pub partial_remark: Option<String>,
 }

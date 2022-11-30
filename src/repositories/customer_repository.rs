@@ -2,11 +2,13 @@ use std::ops::DerefMut;
 
 use async_trait::async_trait;
 use chrono::Utc;
-use sea_query::{Expr, PostgresQueryBuilder, Query};
+use sea_query::{Expr, LikeExpr, PostgresQueryBuilder, Query};
 
 use sqlx::{Error, Row};
 
-use crate::routes::{CustomerJson, NewCustomer, UpdateCustomer, ValidEmail, ValidPhone};
+use crate::routes::{
+    CustomerJson, CustomerSearchParameters, NewCustomer, UpdateCustomer, ValidEmail, ValidPhone,
+};
 use crate::utils::PostgresSession;
 
 #[derive(sea_query::Iden)]
@@ -31,6 +33,13 @@ pub trait CustomerRepo {
     async fn update(&self, customer: UpdateCustomer) -> Result<(), Error>;
 
     async fn delete(&self, id: i64) -> Result<(), Error>;
+
+    async fn list(
+        &self,
+        keyword: CustomerSearchParameters,
+        page: u64,
+        page_size: u64,
+    ) -> Result<Vec<CustomerJson>, Error>;
 
     async fn check_if_customer_is_exist(
         &self,
@@ -159,6 +168,50 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
         let _ = sqlx::query(dbg!(&query)).execute(conn.deref_mut()).await;
 
         Ok(())
+    }
+
+    async fn list(
+        &self,
+        keyword: CustomerSearchParameters,
+        page: u64,
+        page_size: u64,
+    ) -> Result<Vec<CustomerJson>, Error> {
+        let mut conn = self.session.get_session().await;
+        let offset = page * page_size;
+
+        let query = Query::select()
+            .from(Customers::Table)
+            .columns([
+                Customers::Id,
+                Customers::Name,
+                Customers::Email,
+                Customers::Phone,
+                Customers::Remark,
+                Customers::CreatedAt,
+                Customers::UpdatedAt,
+            ])
+            .and_where_option(
+                keyword
+                    .id
+                    .as_ref()
+                    .map(|e| Expr::tbl(Customers::Table, Customers::Id).eq(*e)),
+            )
+            .and_where_option(keyword.partial_email.as_ref().map(|e| {
+                Expr::tbl(Customers::Table, Customers::Email).like(LikeExpr::str(e.as_str()))
+            }))
+            .and_where_option(keyword.partial_phone.as_ref().map(|e| {
+                Expr::tbl(Customers::Table, Customers::Phone).like(LikeExpr::str(e.as_str()))
+            }))
+            .and_where_option(keyword.partial_remark.as_ref().map(|e| {
+                Expr::tbl(Customers::Table, Customers::Remark).like(LikeExpr::str(e.as_str()))
+            }))
+            .offset(offset)
+            .limit(page_size)
+            .to_string(PostgresQueryBuilder);
+
+        sqlx::query_as::<_, CustomerJson>(&query)
+            .fetch_all(conn.deref_mut())
+            .await
     }
 
     #[tracing::instrument(

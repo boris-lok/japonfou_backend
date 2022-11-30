@@ -57,6 +57,8 @@ pub enum CustomerError {
     BadArguments(String),
     #[error("customer is exist.")]
     CustomerIsExist,
+    #[error("decode search parameter failed")]
+    DecodeSearchParameterFailed,
 }
 
 #[derive(thiserror::Error, Debug)]

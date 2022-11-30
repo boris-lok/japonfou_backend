@@ -1,8 +1,8 @@
+use std::sync::Arc;
+
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use once_cell::sync::OnceCell;
 use regex::Regex;
-use std::sync::Arc;
-
 use sqlx::pool::PoolConnection;
 use sqlx::{PgPool, Postgres};
 use tokio::sync::{Mutex, MutexGuard};

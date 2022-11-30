@@ -915,6 +915,7 @@ dependencies = [
  "async-trait",
  "axum",
  "axum-extra",
+ "base64",
  "chrono",
  "config",
  "fake",

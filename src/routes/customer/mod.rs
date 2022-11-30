@@ -5,7 +5,8 @@ use snowflake::SnowflakeIdGenerator;
 
 pub use domain::*;
 pub use route::{
-    create_customer_handler, delete_customer_handler, get_customer_handler, update_customer_handler,
+    create_customer_handler, delete_customer_handler, get_customer_handler, list_customers_handler,
+    update_customer_handler,
 };
 
 mod domain;

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use anyhow::Context;
-use axum::extract::Path;
+use axum::extract::{Path, Query};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::{Extension, Json};
@@ -11,7 +11,10 @@ use axum_extra::extract::WithRejection;
 use crate::errors::{AppError, CustomerError};
 use crate::repositories::CustomerRepo;
 use crate::routes::customer::{CreateCustomerRequest, NewCustomer, NewCustomerResponse};
-use crate::routes::{Claims, DeleteCustomerRequest, UpdateCustomer, UpdateCustomerRequest};
+use crate::routes::{
+    Claims, CustomerSearchParameters, DeleteCustomerRequest, ListCustomersRequest,
+    ListCustomersResponse, UpdateCustomer, UpdateCustomerRequest,
+};
 
 #[tracing::instrument(name = "Create a new customer", skip(customer_repo, claims), fields(user_id=tracing::field::Empty))]
 pub async fn create_customer_handler(
@@ -120,4 +123,36 @@ pub async fn get_customer_handler(
         None => StatusCode::OK.into_response(),
         Some(json) => json.into_response(),
     })
+}
+
+#[tracing::instrument(name = "List customers", skip(customer_repo, claims), fields(user_id=tracing::field::Empty))]
+pub async fn list_customers_handler(
+    claims: Claims,
+    Extension(customer_repo): Extension<Arc<dyn CustomerRepo + Send + Sync>>,
+    Query(payload): Query<ListCustomersRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    tracing::Span::current().record("user_id", tracing::field::display(&claims.sub));
+
+    let search_parameter = if let Some(keyword) = &payload.keyword {
+        // TODO: It should be written in pretty way.
+        base64::decode(keyword)
+            .as_ref()
+            .map(|e| serde_json::from_slice::<CustomerSearchParameters>(e))
+            .map_err(|_| CustomerError::DecodeSearchParameterFailed)?
+            .map_err(|_| CustomerError::DecodeSearchParameterFailed)?
+    } else {
+        CustomerSearchParameters::default()
+    };
+
+    let page = payload.page.unwrap_or(0);
+    let page_size = payload.page_size.unwrap_or(20);
+
+    let data = customer_repo
+        .list(search_parameter, page, page_size)
+        .await
+        .context("Failed to get customers from database")?;
+
+    let response = ListCustomersResponse { data };
+
+    Ok(Json(response))
 }
