@@ -2,7 +2,7 @@ use std::ops::DerefMut;
 
 use async_trait::async_trait;
 use chrono::Utc;
-use sea_query::{Expr, LikeExpr, PostgresQueryBuilder, Query};
+use sea_query::{Expr, PostgresQueryBuilder, Query, SimpleExpr};
 
 use sqlx::{Error, Row};
 
@@ -179,6 +179,11 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
         let mut conn = self.session.get_session().await;
         let offset = page * page_size;
 
+        fn format_like_string(tbl: Customers, col: Customers, value: &str) -> SimpleExpr {
+            let formatted_string = format!(r#"%{}%"#, value);
+            Expr::tbl(tbl, col).like(formatted_string.as_str())
+        }
+
         let query = Query::select()
             .from(Customers::Table)
             .columns([
@@ -197,24 +202,37 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
                     .as_ref()
                     .map(|e| Expr::tbl(Customers::Table, Customers::Id).eq(*e)),
             )
-            .and_where_option(keyword.partial_email.as_ref().map(|e| {
-                Expr::tbl(Customers::Table, Customers::Email).like(LikeExpr::str(e.as_str()))
-            }))
-            .and_where_option(keyword.partial_phone.as_ref().map(|e| {
-                Expr::tbl(Customers::Table, Customers::Phone).like(LikeExpr::str(e.as_str()))
-            }))
-            .and_where_option(keyword.partial_remark.as_ref().map(|e| {
-                Expr::tbl(Customers::Table, Customers::Remark).like(LikeExpr::str(e.as_str()))
-            }))
+            .and_where_option(
+                keyword
+                    .partial_name
+                    .as_ref()
+                    .map(|e| format_like_string(Customers::Table, Customers::Name, e)),
+            )
+            .and_where_option(
+                keyword
+                    .partial_email
+                    .as_ref()
+                    .map(|e| format_like_string(Customers::Table, Customers::Email, e)),
+            )
+            .and_where_option(
+                keyword
+                    .partial_phone
+                    .as_ref()
+                    .map(|e| format_like_string(Customers::Table, Customers::Phone, e)),
+            )
+            .and_where_option(
+                keyword
+                    .partial_remark
+                    .as_ref()
+                    .map(|e| format_like_string(Customers::Table, Customers::Remark, e)),
+            )
             .offset(offset)
             .limit(page_size)
             .to_string(PostgresQueryBuilder);
 
-        dbg!(
-            sqlx::query_as::<_, CustomerJson>(dbg!(&query))
-                .fetch_all(conn.deref_mut())
-                .await
-        )
+        sqlx::query_as::<_, CustomerJson>(dbg!(&query))
+            .fetch_all(conn.deref_mut())
+            .await
     }
 
     #[tracing::instrument(

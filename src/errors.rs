@@ -24,6 +24,9 @@ impl IntoResponse for AppError {
             AppError::Customer(CustomerError::CustomerIsExist) => {
                 (StatusCode::CONFLICT, self.to_string())
             }
+            AppError::Customer(CustomerError::DecodeSearchParameterFailed) => {
+                (StatusCode::BAD_REQUEST, self.to_string())
+            }
             AppError::JsonExtractorRejection(ref e) => match e {
                 JsonRejection::JsonDataError(_) => (StatusCode::BAD_REQUEST, self.to_string()),
                 JsonRejection::JsonSyntaxError(_) => (StatusCode::BAD_REQUEST, self.to_string()),

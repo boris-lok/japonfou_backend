@@ -1,7 +1,7 @@
+use chrono::{DateTime, Utc};
+
 use crate::routes::customer_id_generator;
 use crate::utils::get_phone_number_regex;
-
-use chrono::{DateTime, Utc};
 
 #[derive(Clone, Debug)]
 pub struct ValidEmail(pub String);
@@ -141,7 +141,7 @@ pub struct ListCustomersResponse {
     pub data: Vec<CustomerJson>,
 }
 
-#[derive(serde::Deserialize, Default)]
+#[derive(serde::Deserialize, Default, Debug)]
 pub struct CustomerSearchParameters {
     pub id: Option<i64>,
     #[serde(rename(deserialize = "name"))]
