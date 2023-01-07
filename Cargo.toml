@@ -28,7 +28,7 @@ rand = "0.8.5"
 redis = { version = "0.22.1", features = ["tokio-comp"] }
 regex = "1.7.0"
 rs-snowflake = "0.6.0"
-sea-query = { version = "0.27.2", features = ["derive", "postgres-types", "chrono", "with-chrono"] }
+sea-query = { version = "0.28.1", features = ["derive", "postgres-types", "chrono", "with-chrono"] }
 secrecy = { version = "0.8.0", features = ["serde"] }
 serde = { version = "1.0.147", features = ["derive"] }
 serde_json = "1.0.87"
