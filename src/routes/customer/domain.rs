@@ -113,7 +113,7 @@ impl UpdateCustomer {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
-pub struct NewCustomerResponse {
+pub struct CreateCustomerResponse {
     pub id: i64,
 }
 

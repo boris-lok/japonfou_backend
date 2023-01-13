@@ -10,7 +10,7 @@ use axum_extra::extract::WithRejection;
 
 use crate::errors::{AppError, CustomerError};
 use crate::repositories::CustomerRepo;
-use crate::routes::customer::{CreateCustomerRequest, NewCustomer, NewCustomerResponse};
+use crate::routes::customer::{CreateCustomerRequest, NewCustomer, CreateCustomerResponse};
 use crate::routes::{
     Claims, CustomerSearchParameters, DeleteCustomerRequest, ListCustomersRequest,
     ListCustomersResponse, UpdateCustomer, UpdateCustomerRequest,
@@ -21,7 +21,7 @@ pub async fn create_customer_handler(
     claims: Claims,
     Extension(customer_repo): Extension<Arc<dyn CustomerRepo + Sync + Send>>,
     WithRejection(Json(payload), _): WithRejection<Json<CreateCustomerRequest>, AppError>,
-) -> Result<Json<NewCustomerResponse>, AppError> {
+) -> Result<Json<CreateCustomerResponse>, AppError> {
     tracing::Span::current().record("user_id", &tracing::field::display(&claims.sub));
     let new_customer = NewCustomer::parse(payload)
         .await
@@ -43,7 +43,7 @@ pub async fn create_customer_handler(
         .await
         .context("Failed to insert a new customer in the database")?;
 
-    Ok(Json(NewCustomerResponse { id }))
+    Ok(Json(CreateCustomerResponse { id }))
 }
 
 #[tracing::instrument(name = "Update a customer", skip(customer_repo, claims), fields(user_id=tracing::field::Empty))]

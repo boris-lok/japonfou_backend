@@ -11,7 +11,7 @@ use sqlx::types::Uuid;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 
 use japonfou::configuration::{get_configuration, DatabaseSettings};
-use japonfou::routes::{LoginResponse, NewCustomerResponse};
+use japonfou::routes::{LoginResponse, CreateCustomerResponse};
 use japonfou::startup::{get_database_connection, run};
 use japonfou::utils::{JwtKey, JWT_SECRET_KEY_INSTANCE};
 
@@ -64,7 +64,7 @@ impl AuthTestApp {
 
         let response = self.post("/api/v1/admin/customers", &request).await;
         assert_eq!(response.status().as_u16(), 200);
-        let response: Result<NewCustomerResponse, reqwest::Error> = response.json().await;
+        let response: Result<CreateCustomerResponse, reqwest::Error> = response.json().await;
         assert!(response.is_ok());
         let response = response.unwrap();
         response.id

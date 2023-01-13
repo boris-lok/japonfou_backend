@@ -2,7 +2,7 @@ use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
 use fake::Fake;
 
-use japonfou::routes::{CustomerJson, ListCustomersResponse, NewCustomerResponse};
+use japonfou::routes::{CustomerJson, ListCustomersResponse, CreateCustomerResponse};
 
 use crate::helpers::spawn_app;
 
@@ -29,7 +29,7 @@ async fn create_customer_works() {
 
     // Assert
     assert_eq!(response.status().as_u16(), 200);
-    let response: Result<NewCustomerResponse, reqwest::Error> = response.json().await;
+    let response: Result<CreateCustomerResponse, reqwest::Error> = response.json().await;
     assert!(response.is_ok());
     let response = response.unwrap();
 
