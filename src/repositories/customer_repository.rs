@@ -94,8 +94,11 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
             let email = customer.email.map(|e| e.0).into();
             let phone = customer.phone.map(|e| e.0).into();
             let remark = customer.remark.into();
-            let created_at = Utc::now().into();
-            let query = Query::insert()
+            let now = Utc::now();
+            let created_at = now.clone().into();
+            let updated_at = now.into();
+
+            Query::insert()
                 .into_table(Customers::Table)
                 .columns([
                     Customers::Id,
@@ -104,11 +107,11 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
                     Customers::Phone,
                     Customers::Remark,
                     Customers::CreatedAt,
+                    Customers::UpdatedAt,
                 ])
-                .values_panic([id, name, email, phone, remark, created_at])
+                .values_panic([id, name, email, phone, remark, created_at, updated_at])
                 .returning(Query::returning().column(Customers::Id))
-                .to_string(PostgresQueryBuilder);
-            query
+                .to_string(PostgresQueryBuilder)
         };
 
         let res = sqlx::query(dbg!(&query))
