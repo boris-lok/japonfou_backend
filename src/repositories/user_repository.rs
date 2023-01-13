@@ -55,7 +55,7 @@ impl UserRepo for PostgresUserRepoImpl {
         let query = Query::select()
             .columns([Users::Id, Users::PasswordHash])
             .from(Users::Table)
-            .and_where(Expr::tbl(Users::Table, Users::Username).eq(username))
+            .and_where(Expr::col((Users::Table, Users::Username)).eq(username))
             .to_string(PostgresQueryBuilder);
 
         let res = sqlx::query(&query)
@@ -78,7 +78,7 @@ impl UserRepo for PostgresUserRepoImpl {
         let query = Query::select()
             .column(Users::Username)
             .from(Users::Table)
-            .and_where(Expr::tbl(Users::Table, Users::Id).eq(user_id))
+            .and_where(Expr::col((Users::Table, Users::Id)).eq(user_id))
             .to_string(PostgresQueryBuilder);
 
         let res = sqlx::query(&query)

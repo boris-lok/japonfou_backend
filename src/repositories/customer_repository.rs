@@ -76,7 +76,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
                 Customers::UpdatedAt,
                 Customers::DeletedAt,
             ])
-            .and_where(Expr::tbl(Customers::Table, Customers::Id).eq(customer_id))
+            .and_where(Expr::col((Customers::Table, Customers::Id)).eq(customer_id))
             .to_string(PostgresQueryBuilder);
 
         sqlx::query_as::<_, CustomerJson>(dbg!(&query))
@@ -95,7 +95,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
             let phone = customer.phone.map(|e| e.0).into();
             let remark = customer.remark.into();
             let now = Utc::now();
-            let created_at = now.clone().into();
+            let created_at = now.into();
             let updated_at = now.into();
 
             Query::insert()
@@ -147,7 +147,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
             let query = Query::update()
                 .table(Customers::Table)
                 .values(update_data)
-                .and_where(Expr::tbl(Customers::Table, Customers::Id).eq(customer.id))
+                .and_where(Expr::col((Customers::Table, Customers::Id)).eq(customer.id))
                 .to_string(PostgresQueryBuilder);
 
             query
@@ -165,7 +165,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
         let query = Query::update()
             .table(Customers::Table)
             .values([(Customers::DeletedAt, Utc::now().into())])
-            .and_where(Expr::tbl(Customers::Table, Customers::Id).eq(id))
+            .and_where(Expr::col((Customers::Table, Customers::Id)).eq(id))
             .to_string(PostgresQueryBuilder);
 
         let _ = sqlx::query(dbg!(&query)).execute(conn.deref_mut()).await;
@@ -184,7 +184,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
 
         fn format_like_string(tbl: Customers, col: Customers, value: &str) -> SimpleExpr {
             let formatted_string = format!(r#"%{}%"#, value);
-            Expr::tbl(tbl, col).like(formatted_string.as_str())
+            Expr::col((tbl, col)).like(formatted_string.as_str())
         }
 
         let query = Query::select()
@@ -203,7 +203,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
                 keyword
                     .id
                     .as_ref()
-                    .map(|e| Expr::tbl(Customers::Table, Customers::Id).eq(*e)),
+                    .map(|e| Expr::col((Customers::Table, Customers::Id)).eq(*e)),
             )
             .and_where_option(
                 keyword
@@ -256,14 +256,14 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
             .and_where_option(
                 email
                     .as_ref()
-                    .map(|e| Expr::tbl(Customers::Table, Customers::Email).eq(&*e.0)),
+                    .map(|e| Expr::col((Customers::Table, Customers::Email)).eq(&*e.0)),
             )
             .and_where_option(
                 phone
                     .as_ref()
-                    .map(|e| Expr::tbl(Customers::Table, Customers::Phone).eq(&*e.0)),
+                    .map(|e| Expr::col((Customers::Table, Customers::Phone)).eq(&*e.0)),
             )
-            .and_where_option(id.map(|e| Expr::tbl(Customers::Table, Customers::Id).ne(e)))
+            .and_where_option(id.map(|e| Expr::col((Customers::Table, Customers::Id)).ne(e)))
             .to_string(PostgresQueryBuilder);
 
         sqlx::query(dbg!(&query))

@@ -36,17 +36,17 @@ impl PostgresProductRepoImpl {
 
 #[async_trait::async_trait]
 impl ProductRepository for PostgresProductRepoImpl {
-    #[tracing::instrument(name = "Save a new product into database", skip(self, customer))]
+    #[tracing::instrument(name = "Save a new product into database", skip(self, new_product))]
     async fn create(&self, new_product: NewProduct) -> Result<i64, Error> {
         let mut conn = self.session.get_session().await;
 
         let query = {
             let id = new_product.id.into();
             let name = new_product.name.into();
-            let currency = new_product.currency.into();
+            let currency = new_product.currency.0.into();
             let price = new_product.price.into();
             let now = Utc::now();
-            let created_at = now.clone().into();
+            let created_at = now.into();
             let updated_at = now.into();
 
             let query = Query::insert()

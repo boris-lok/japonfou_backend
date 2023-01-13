@@ -7,10 +7,12 @@ pub struct CreateProductRequest {
     pub price: f64,
 }
 
+pub struct ValidCurrency(pub i16);
+
 pub struct NewProduct {
     pub id: i64,
     pub name: String,
-    pub currency: i16,
+    pub currency: ValidCurrency,
     pub price: f64,
 }
 
@@ -26,7 +28,7 @@ impl NewProduct {
         Ok(Self {
             id,
             name: req.name,
-            currency: req.currency,
+            currency: ValidCurrency(req.currency),
             price: req.price,
         })
     }
