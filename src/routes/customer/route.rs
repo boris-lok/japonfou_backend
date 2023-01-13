@@ -10,7 +10,7 @@ use axum_extra::extract::WithRejection;
 
 use crate::errors::{AppError, CustomerError};
 use crate::repositories::CustomerRepo;
-use crate::routes::customer::{CreateCustomerRequest, NewCustomer, CreateCustomerResponse};
+use crate::routes::customer::{CreateCustomerRequest, CreateCustomerResponse, NewCustomer};
 use crate::routes::{
     Claims, CustomerSearchParameters, DeleteCustomerRequest, ListCustomersRequest,
     ListCustomersResponse, UpdateCustomer, UpdateCustomerRequest,
@@ -25,7 +25,7 @@ pub async fn create_customer_handler(
     tracing::Span::current().record("user_id", &tracing::field::display(&claims.sub));
     let new_customer = NewCustomer::parse(payload)
         .await
-        .map_err(CustomerError::BadArguments)?;
+        .map_err(AppError::BadArguments)?;
 
     let email = &new_customer.email;
     let phone = &new_customer.phone;
@@ -54,7 +54,7 @@ pub async fn update_customer_handler(
 ) -> Result<impl IntoResponse, AppError> {
     tracing::Span::current().record("user_id", tracing::field::display(&claims.sub));
 
-    let update_customer = UpdateCustomer::parse(payload).map_err(CustomerError::BadArguments)?;
+    let update_customer = UpdateCustomer::parse(payload).map_err(AppError::BadArguments)?;
 
     let email = &update_customer.email;
     let phone = &update_customer.phone;
@@ -108,7 +108,7 @@ pub async fn get_customer_handler(
     let customer_id = params.get("id").and_then(|e| e.parse::<i64>().ok());
 
     if customer_id.is_none() {
-        return Err(CustomerError::BadArguments(
+        return Err(AppError::BadArguments(
             "There is no customer id in the query string".to_string(),
         ))?;
     }

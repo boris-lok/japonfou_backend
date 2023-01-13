@@ -15,10 +15,14 @@ use tracing::Level;
 use uuid::Uuid;
 
 use crate::configuration::{DatabaseSettings, Settings};
-use crate::repositories::{CustomerRepo, PostgresCustomerRepoImpl, PostgresUserRepoImpl, UserRepo};
+use crate::repositories::{
+    CustomerRepo, PostgresCustomerRepoImpl, PostgresProductRepoImpl, PostgresUserRepoImpl,
+    ProductRepository, UserRepo,
+};
 use crate::routes::{
-    change_password, create_customer_handler, delete_customer_handler, get_customer_handler,
-    health_check, list_customers_handler, login, logout, update_customer_handler,
+    change_password, create_customer_handler, create_product_handler, delete_customer_handler,
+    get_customer_handler, health_check, list_customers_handler, login, logout,
+    update_customer_handler,
 };
 use crate::utils::PostgresSession;
 
@@ -64,6 +68,13 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
         .expect("Failed to create a user repository")
         as Arc<dyn UserRepo + Send + Sync>;
 
+    let product_repo = PostgresSession::new(state.db_pool.clone())
+        .await
+        .map(PostgresProductRepoImpl::new)
+        .map(Arc::new)
+        .expect("Failed to create product repository")
+        as Arc<dyn ProductRepository + Send + Sync>;
+
     let customer_routes = Router::new()
         .route("/customers/:id", get(get_customer_handler))
         .route("/customers", get(list_customers_handler))
@@ -71,10 +82,13 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
         .route("/customers", put(update_customer_handler))
         .route("/customers", delete(delete_customer_handler));
 
+    let product_routes = Router::new().route("/products", post(create_product_handler));
+
     let change_password_route = Router::new().route("/change_password", post(change_password));
 
     let admin_routes = Router::new()
         .merge(customer_routes)
+        .merge(product_routes)
         .merge(change_password_route);
 
     let authorization_routes = Router::new()
@@ -101,6 +115,7 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
         )
         .layer(Extension(customer_repo))
         .layer(Extension(user_repo))
+        .layer(Extension(product_repo))
         .with_state(state);
 
     axum::Server::from_tcp(listener)

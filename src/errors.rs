@@ -5,6 +5,8 @@ use axum::Json;
 
 #[derive(thiserror::Error, Debug)]
 pub enum AppError {
+    #[error("{0}")]
+    BadArguments(String),
     #[error(transparent)]
     Customer(#[from] CustomerError),
     #[error(transparent)]
@@ -20,7 +22,7 @@ pub enum AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {
-            AppError::Customer(CustomerError::BadArguments(msg)) => (StatusCode::BAD_REQUEST, msg),
+            AppError::BadArguments(msg) => (StatusCode::BAD_REQUEST, msg),
             AppError::Customer(CustomerError::CustomerIsExist) => {
                 (StatusCode::CONFLICT, self.to_string())
             }
@@ -56,8 +58,6 @@ impl IntoResponse for AppError {
 
 #[derive(thiserror::Error, Debug)]
 pub enum CustomerError {
-    #[error("{0}")]
-    BadArguments(String),
     #[error("customer is exist.")]
     CustomerIsExist,
     #[error("decode search parameter failed")]

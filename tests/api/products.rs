@@ -2,6 +2,8 @@ use crate::helpers::spawn_app;
 use fake::faker::name::en::Name;
 use fake::Fake;
 use japonfou::routes::CreateProductResponse;
+use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
+use rust_decimal::Decimal;
 
 #[tokio::test]
 async fn create_product_works() {
@@ -39,5 +41,5 @@ async fn create_product_works() {
 
     assert_eq!(data_from_db.name, name);
     assert_eq!(data_from_db.currency, currency);
-    assert_eq!(data_from_db.price, price);
+    assert!(data_from_db.price.to_f64().unwrap() - price <= f64::EPSILON);
 }
