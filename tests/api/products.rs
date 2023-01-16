@@ -1,9 +1,8 @@
 use crate::helpers::spawn_app;
 use fake::faker::name::en::Name;
 use fake::Fake;
-use japonfou::routes::CreateProductResponse;
+use japonfou::routes::{CreateProductResponse, ProductJson};
 use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
-use rust_decimal::Decimal;
 
 #[tokio::test]
 async fn create_product_works() {
@@ -42,4 +41,34 @@ async fn create_product_works() {
     assert_eq!(data_from_db.name, name);
     assert_eq!(data_from_db.currency, currency);
     assert!(data_from_db.price.to_f64().unwrap() - price <= f64::EPSILON);
+}
+
+#[tokio::test]
+async fn get_product_works() {
+    // Arrange
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
+    let id = app.create_a_new_product().await;
+
+    // Act
+    let uri = format!("/api/v1/admin/products/{id}");
+    let response = app.get(&uri).await;
+
+    assert_eq!(response.status().as_u16(), 200);
+    let data: ProductJson = response.json().await.expect("Failed to decode json");
+
+    let data_from_db = sqlx::query_as::<_, ProductJson>(r#"SELECT * FROM products where id=$1; "#)
+        .bind(id)
+        .fetch_one(&app.db_pool)
+        .await
+        .expect("Failed to fetch saved product");
+
+    assert_eq!(data_from_db.id, data.id);
+    assert_eq!(data_from_db.name, data.name);
+    assert_eq!(data_from_db.currency, data.currency);
+    assert!(data_from_db.price.to_f64().unwrap() - data.price.to_f64().unwrap() <= f64::EPSILON);
+    assert_eq!(data_from_db.created_at, data.created_at);
+    assert_eq!(data_from_db.updated_at, data.updated_at);
+    assert_eq!(data_from_db.deleted_at, data.deleted_at);
 }

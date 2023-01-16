@@ -1,5 +1,6 @@
 use crate::routes::product_id_generator;
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 
 #[derive(serde::Deserialize, Debug)]
 pub struct CreateProductRequest {
@@ -24,7 +25,7 @@ pub struct ProductJson {
     pub id: i64,
     pub name: String,
     pub currency: i16,
-    pub price: f64,
+    pub price: Decimal,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
     pub deleted_at: Option<DateTime<Utc>>,

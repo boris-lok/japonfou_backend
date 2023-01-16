@@ -11,7 +11,7 @@ use sqlx::types::Uuid;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 
 use japonfou::configuration::{get_configuration, DatabaseSettings};
-use japonfou::routes::{LoginResponse, CreateCustomerResponse};
+use japonfou::routes::{CreateCustomerResponse, CreateProductResponse, LoginResponse};
 use japonfou::startup::{get_database_connection, run};
 use japonfou::utils::{JwtKey, JWT_SECRET_KEY_INSTANCE};
 
@@ -68,6 +68,24 @@ impl AuthTestApp {
         assert!(response.is_ok());
         let response = response.unwrap();
         response.id
+    }
+
+    pub async fn create_a_new_product(&self) -> i64 {
+        let name: String = Name().fake();
+        let price: f64 = 20.0;
+
+        let req = serde_json::json!({
+            "name": name,
+            "currency": 344,
+            "price": price,
+        });
+
+        let res = self.post("/api/v1/admin/products", &req).await;
+        assert_eq!(res.status().as_u16(), 200);
+        let res: Result<CreateProductResponse, reqwest::Error> = res.json().await;
+        assert!(res.is_ok());
+        let res = res.unwrap();
+        res.id
     }
 
     pub async fn post(&self, uri: &str, body: &Value) -> reqwest::Response {
