@@ -36,6 +36,11 @@ pub struct CreateProductResponse {
     pub id: i64,
 }
 
+#[derive(serde::Deserialize, Debug)]
+pub struct DeleteProductRequest {
+    pub id: i64,
+}
+
 impl NewProduct {
     pub async fn parse(req: CreateProductRequest) -> Result<Self, String> {
         if req.name.trim().is_empty() {

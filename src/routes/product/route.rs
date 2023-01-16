@@ -1,6 +1,8 @@
 use crate::errors::AppError;
 use crate::repositories::ProductRepository;
-use crate::routes::{Claims, CreateProductRequest, CreateProductResponse, NewProduct};
+use crate::routes::{
+    Claims, CreateProductRequest, CreateProductResponse, DeleteProductRequest, NewProduct,
+};
 use anyhow::Context;
 use axum::extract::Path;
 use axum::http::StatusCode;
@@ -55,4 +57,20 @@ pub async fn get_product_handler(
         None => StatusCode::OK.into_response(),
         Some(json) => json.into_response(),
     })
+}
+
+#[tracing::instrument(name="delete a product", skip(product_repo, claims), fields(user_id=tracing::field::Empty))]
+pub async fn delete_product_handler(
+    claims: Claims,
+    Extension(product_repo): Extension<Arc<dyn ProductRepository + Sync + Send>>,
+    WithRejection(Json(payload), _): WithRejection<Json<DeleteProductRequest>, AppError>,
+) -> Result<impl IntoResponse, AppError> {
+    tracing::Span::current().record("user_id", &tracing::field::display(&claims.sub));
+
+     product_repo
+        .delete(payload.id)
+        .await
+        .context("Failed to delete a product in the database")?;
+
+    Ok(StatusCode::OK)
 }

@@ -116,3 +116,29 @@ async fn get_product_works() {
     assert_eq!(data_from_db.updated_at, data.updated_at);
     assert_eq!(data_from_db.deleted_at, data.deleted_at);
 }
+
+#[tokio::test]
+async fn delete_product_works() {
+    // Arrange
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
+    let id = app.create_a_new_product().await;
+
+    let request = serde_json::json!({
+        "id": id,
+    });
+
+    // Act
+    let response = app.delete("/api/v1/admin/products", &request).await;
+
+    // Assert
+    assert_eq!(response.status().as_u16(), 200);
+
+    let data_from_db = sqlx::query!(r#"SELECT deleted_at FROM products where id=$1"#, id)
+        .fetch_one(&app.db_pool)
+        .await
+        .expect("Failed to fetch saved product");
+
+    assert!(data_from_db.deleted_at.is_some());
+}

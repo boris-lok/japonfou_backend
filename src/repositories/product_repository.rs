@@ -24,6 +24,8 @@ pub trait ProductRepository {
     async fn get(&self, id: i64) -> Result<Option<ProductJson>, Error>;
 
     async fn create(&self, new_product: NewProduct) -> Result<i64, Error>;
+
+    async fn delete(&self, id: i64) -> Result<(), Error>;
 }
 
 pub struct PostgresProductRepoImpl {
@@ -95,5 +97,19 @@ impl ProductRepository for PostgresProductRepoImpl {
             .await?;
 
         Ok(res.get(0))
+    }
+
+    async fn delete(&self, id: i64) -> Result<(), Error> {
+        let mut conn = self.session.get_session().await;
+
+        let query = Query::update()
+            .table(Products::Table)
+            .values([(Products::DeletedAt, Utc::now().into())])
+            .and_where(Expr::col((Products::Table, Products::Id)).eq(id))
+            .to_string(PostgresQueryBuilder);
+
+        let _ = sqlx::query(query.as_str()).execute(conn.deref_mut()).await;
+
+        Ok(())
     }
 }

@@ -1,19 +1,20 @@
 use std::net::TcpListener;
 
-use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
+use argon2::password_hash::SaltString;
+use fake::Fake;
 use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
-use fake::Fake;
+use itertools::Itertools;
 use secrecy::ExposeSecret;
 use serde_json::Value;
-use sqlx::types::Uuid;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
+use sqlx::types::Uuid;
 
-use japonfou::configuration::{get_configuration, DatabaseSettings};
+use japonfou::configuration::{DatabaseSettings, get_configuration};
 use japonfou::routes::{CreateCustomerResponse, CreateProductResponse, LoginResponse};
 use japonfou::startup::{get_database_connection, run};
-use japonfou::utils::{JwtKey, JWT_SECRET_KEY_INSTANCE};
+use japonfou::utils::{JWT_SECRET_KEY_INSTANCE, JwtKey};
 
 pub struct AuthTestApp {
     pub address: String,
@@ -53,8 +54,12 @@ impl AuthTestApp {
     pub async fn create_a_new_customer(&self) -> i64 {
         let name: String = Name().fake();
         let email: String = SafeEmail().fake();
-        // TODO: fake phone number is not correct. (e.g. "613-637-8110 x76344")
-        let phone = "(853) 12345678".to_string();
+        let mut rng = rand::thread_rng();
+        let sample = rand::seq::index::sample(&mut rng, 8, 8)
+            .into_vec()
+            .iter()
+            .join("");
+        let phone = dbg!(format!("(853) {sample}"));
 
         let request = serde_json::json!({
             "name": name,
