@@ -1,11 +1,11 @@
 use crate::errors::AppError;
 use crate::repositories::ProductRepository;
 use crate::routes::{
-    Claims, CreateProductRequest, CreateProductResponse, DeleteProductRequest, NewProduct,
-    UpdateProduct, UpdateProductRequest,
+    Claims, CreateProductRequest, CreateProductResponse, DeleteProductRequest, ListProductsRequest,
+    ListProductsResponse, NewProduct, ProductSearchParameters, UpdateProduct, UpdateProductRequest,
 };
 use anyhow::Context;
-use axum::extract::Path;
+use axum::extract::{Path, Query};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::{Extension, Json};
@@ -99,4 +99,36 @@ pub async fn update_product_handler(
     }
 
     Ok(StatusCode::OK)
+}
+
+#[tracing::instrument(name = "List products", skip(product_repo, claims), fields(user_id=tracing::field::Empty))]
+pub async fn list_products_handler(
+    claims: Claims,
+    Extension(product_repo): Extension<Arc<dyn ProductRepository + Sync + Send>>,
+    Query(payload): Query<ListProductsRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    tracing::Span::current().record("user_id", tracing::field::display(&claims.sub));
+
+    let search_parameter = if let Some(keyword) = &payload.keyword {
+        // TODO: It should be written in pretty way.
+        base64::decode(keyword)
+            .as_ref()
+            .map(|e| serde_json::from_slice::<ProductSearchParameters>(e))
+            .map_err(|_| AppError::DecodeSearchParameterFailed)?
+            .map_err(|_| AppError::DecodeSearchParameterFailed)?
+    } else {
+        ProductSearchParameters::default()
+    };
+
+    let page = payload.page.unwrap_or(0);
+    let page_size = payload.page_size.unwrap_or(20);
+
+    let data = product_repo
+        .list(search_parameter, page, page_size)
+        .await
+        .context("Failed to get customers from database")?;
+
+    let response = ListProductsResponse { data };
+
+    Ok(Json(response))
 }

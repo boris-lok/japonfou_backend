@@ -1,7 +1,7 @@
 use crate::helpers::spawn_app;
 use fake::faker::name::en::Name;
 use fake::Fake;
-use japonfou::routes::{CreateProductResponse, ProductJson};
+use japonfou::routes::{CreateProductResponse, ListProductsResponse, ProductJson};
 use rust_decimal::prelude::ToPrimitive;
 
 #[tokio::test]
@@ -205,4 +205,125 @@ async fn update_product_return_a_400_when_data_is_invalid() {
             msg
         );
     }
+}
+
+#[tokio::test]
+async fn list_products_works() {
+    // Arrange
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
+
+    let mut expected_ids = vec![];
+
+    for _ in 0..20 {
+        expected_ids.push(app.create_a_new_product().await);
+    }
+
+    // Act
+    let uri = "/api/v1/admin/products";
+    let response = app.get(uri).await;
+
+    assert_eq!(response.status().as_u16(), 200);
+    let response = response.json::<ListProductsResponse>().await;
+    assert!(response.is_ok());
+    let data = response.unwrap();
+    assert_eq!(data.data.len(), 20);
+}
+
+#[tokio::test]
+async fn list_products_works_with_filter() {
+    // Arrange
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
+
+    let mut expected_ids = vec![];
+
+    for _ in 0..20 {
+        expected_ids.push(app.create_a_new_product().await);
+    }
+
+    // Act
+    let uri = "/api/v1/admin/products";
+    let response = app.get(uri).await;
+
+    assert_eq!(response.status().as_u16(), 200);
+    let response_json = response.json::<ListProductsResponse>().await;
+    assert!(response_json.is_ok());
+    let data = response_json.unwrap();
+    assert_eq!(data.data.len(), 20);
+
+    let data_from_db = sqlx::query_as::<_, ProductJson>(r#"SELECT * FROM products where id=$1; "#)
+        .bind(expected_ids[0])
+        .fetch_one(&app.db_pool)
+        .await
+        .expect("Failed to fetch saved products");
+
+    let id = data_from_db.id.to_string();
+    let name = data_from_db.name;
+
+    let test_cases = vec![
+        format!(r#"{{ "{}": {} }}"#, "id", id),
+        format!(r#"{{ "{}": "{}" }}"#, "name", name),
+        format!(r#"{{ "{}": {}, "{}": "{}" }}"#, "id", id, "name", name),
+    ];
+
+    for keyword in test_cases {
+        let keyword = base64::encode(&keyword);
+        let uri = format!("/api/v1/admin/products?keyword={}", keyword);
+
+        let response = app.get(&uri).await;
+        assert_eq!(response.status().as_u16(), 200);
+        let response_json = response.json::<ListProductsResponse>().await;
+        assert!(response_json.is_ok());
+        let data = response_json.unwrap();
+        assert_eq!(data.data.len(), 1);
+    }
+}
+
+#[tokio::test]
+async fn list_products_with_page_and_page_size_works() {
+    // Arrange
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
+
+    for _ in 0..25 {
+        let _ = app.create_a_new_product().await;
+    }
+
+    let test_cases = vec![(0, 10, 10), (1, 10, 10), (1, 5, 5), (2, 10, 5)];
+
+    // Act
+    for (page, page_size, expected) in test_cases {
+        let uri = format!(
+            "/api/v1/admin/products?page={}&page_size={}",
+            page, page_size
+        );
+
+        // Assert
+        let response = app.get(&uri).await;
+        assert_eq!(response.status().as_u16(), 200);
+        let response_json = response.json::<ListProductsResponse>().await;
+        assert!(response_json.is_ok());
+        let data = response_json.unwrap();
+        assert_eq!(data.data.len(), expected);
+    }
+}
+
+#[tokio::test]
+async fn list_products_failed_when_keyword_is_invalid() {
+    // Arrange
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
+    let keyword = "random_string";
+    let uri = format!("/api/v1/admin/products?keyword={}", keyword);
+
+    // Act
+    let response = app.get(&uri).await;
+
+    // Assert
+    assert_eq!(response.status().as_u16(), 400);
 }

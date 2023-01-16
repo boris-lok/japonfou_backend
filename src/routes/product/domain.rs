@@ -56,6 +56,25 @@ pub struct UpdateProduct {
     pub price: Option<f64>,
 }
 
+#[derive(serde::Deserialize, Debug)]
+pub struct ListProductsRequest {
+    pub keyword: Option<String>,
+    pub page: Option<u64>,
+    pub page_size: Option<u64>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+pub struct ListProductsResponse {
+    pub data: Vec<ProductJson>,
+}
+
+#[derive(serde::Deserialize, Debug, Default)]
+pub struct ProductSearchParameters {
+    pub id: Option<i64>,
+    #[serde(rename(deserialize = "name"))]
+    pub partial_name: Option<String>,
+}
+
 impl NewProduct {
     pub async fn parse(req: CreateProductRequest) -> Result<Self, String> {
         if req.name.trim().is_empty() {

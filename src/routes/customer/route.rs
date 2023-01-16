@@ -138,8 +138,8 @@ pub async fn list_customers_handler(
         base64::decode(keyword)
             .as_ref()
             .map(|e| serde_json::from_slice::<CustomerSearchParameters>(e))
-            .map_err(|_| CustomerError::DecodeSearchParameterFailed)?
-            .map_err(|_| CustomerError::DecodeSearchParameterFailed)?
+            .map_err(|_| AppError::DecodeSearchParameterFailed)?
+            .map_err(|_| AppError::DecodeSearchParameterFailed)?
     } else {
         CustomerSearchParameters::default()
     };

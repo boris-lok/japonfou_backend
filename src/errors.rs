@@ -7,6 +7,8 @@ use axum::Json;
 pub enum AppError {
     #[error("{0}")]
     BadArguments(String),
+    #[error("decode search parameter failed")]
+    DecodeSearchParameterFailed,
     #[error(transparent)]
     Customer(#[from] CustomerError),
     #[error(transparent)]
@@ -26,9 +28,7 @@ impl IntoResponse for AppError {
             AppError::Customer(CustomerError::CustomerIsExist) => {
                 (StatusCode::CONFLICT, self.to_string())
             }
-            AppError::Customer(CustomerError::DecodeSearchParameterFailed) => {
-                (StatusCode::BAD_REQUEST, self.to_string())
-            }
+            AppError::DecodeSearchParameterFailed => (StatusCode::BAD_REQUEST, self.to_string()),
             AppError::JsonExtractorRejection(ref e) => match e {
                 JsonRejection::JsonDataError(_) => (StatusCode::BAD_REQUEST, self.to_string()),
                 JsonRejection::JsonSyntaxError(_) => (StatusCode::BAD_REQUEST, self.to_string()),
@@ -60,8 +60,6 @@ impl IntoResponse for AppError {
 pub enum CustomerError {
     #[error("customer is exist.")]
     CustomerIsExist,
-    #[error("decode search parameter failed")]
-    DecodeSearchParameterFailed,
 }
 
 #[derive(thiserror::Error, Debug)]
