@@ -2,7 +2,7 @@ use crate::helpers::spawn_app;
 use fake::faker::name::en::Name;
 use fake::Fake;
 use japonfou::routes::{CreateProductResponse, ProductJson};
-use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
+use rust_decimal::prelude::ToPrimitive;
 
 #[tokio::test]
 async fn create_product_works() {
@@ -41,6 +41,50 @@ async fn create_product_works() {
     assert_eq!(data_from_db.name, name);
     assert_eq!(data_from_db.currency, currency);
     assert!(data_from_db.price.to_f64().unwrap() - price <= f64::EPSILON);
+}
+
+#[tokio::test]
+async fn create_new_product_return_a_400_when_data_is_invalid() {
+    // Arrange
+    let app = spawn_app().await;
+    let login_body = app.login_body();
+    let app = app.login(&login_body).await;
+    let test_cases = vec![
+        (
+            serde_json::json!({
+                "name": "",
+                "currency": 344,
+                "price": 10.0
+            }),
+            "Name is invalid",
+        ),
+        (
+            serde_json::json!({
+                "name": "product",
+                "price": 10.0
+            }),
+            "Missing currency",
+        ),
+        (
+            serde_json::json!({
+                "name": "product",
+                "currency": 344,
+            }),
+            "Missing price",
+        ),
+    ];
+
+    for (body, msg) in test_cases {
+        // Act
+        let response = app.post("/api/v1/admin/products", &body).await;
+
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            "The API didn't fail with 400 Bad Request when the payload was {}",
+            msg
+        );
+    }
 }
 
 #[tokio::test]

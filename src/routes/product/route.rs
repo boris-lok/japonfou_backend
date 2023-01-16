@@ -1,6 +1,6 @@
 use crate::errors::AppError;
 use crate::repositories::ProductRepository;
-use crate::routes::{Claims, CreateProductRequest, CreateProductResponse, NewProduct, ProductJson};
+use crate::routes::{Claims, CreateProductRequest, CreateProductResponse, NewProduct};
 use anyhow::Context;
 use axum::extract::Path;
 use axum::http::StatusCode;
