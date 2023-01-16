@@ -2,6 +2,7 @@ use crate::errors::AppError;
 use crate::repositories::ProductRepository;
 use crate::routes::{
     Claims, CreateProductRequest, CreateProductResponse, DeleteProductRequest, NewProduct,
+    UpdateProduct, UpdateProductRequest,
 };
 use anyhow::Context;
 use axum::extract::Path;
@@ -67,10 +68,35 @@ pub async fn delete_product_handler(
 ) -> Result<impl IntoResponse, AppError> {
     tracing::Span::current().record("user_id", &tracing::field::display(&claims.sub));
 
-     product_repo
+    product_repo
         .delete(payload.id)
         .await
         .context("Failed to delete a product in the database")?;
+
+    Ok(StatusCode::OK)
+}
+
+pub async fn update_product_handler(
+    claims: Claims,
+    Extension(product_repo): Extension<Arc<dyn ProductRepository + Sync + Send>>,
+    WithRejection(Json(payload), _): WithRejection<Json<UpdateProductRequest>, AppError>,
+) -> Result<impl IntoResponse, AppError> {
+    tracing::Span::current().record("user_id", &tracing::field::display(&claims.sub));
+
+    let update_product = UpdateProduct::parse(payload)
+        .await
+        .map_err(AppError::BadArguments)?;
+
+    let need_update = update_product.name.is_some()
+        || update_product.currency.is_some()
+        || update_product.price.is_some();
+
+    if need_update {
+        product_repo
+            .update(update_product)
+            .await
+            .context("Failed to update a product in the database")?;
+    }
 
     Ok(StatusCode::OK)
 }

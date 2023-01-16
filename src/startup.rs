@@ -22,7 +22,7 @@ use crate::repositories::{
 use crate::routes::{
     change_password, create_customer_handler, create_product_handler, delete_customer_handler,
     delete_product_handler, get_customer_handler, get_product_handler, health_check,
-    list_customers_handler, login, logout, update_customer_handler,
+    list_customers_handler, login, logout, update_customer_handler, update_product_handler,
 };
 use crate::utils::PostgresSession;
 
@@ -85,6 +85,7 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
     let product_routes = Router::new()
         .route("/products", post(create_product_handler))
         .route("/products/:id", get(get_product_handler))
+        .route("/products", put(update_product_handler))
         .route("/products", delete(delete_product_handler));
 
     let change_password_route = Router::new().route("/change_password", post(change_password));

@@ -4,7 +4,7 @@ use chrono::Utc;
 use sea_query::{Expr, PostgresQueryBuilder, Query};
 use sqlx::{Error, Row};
 
-use crate::routes::{NewProduct, ProductJson};
+use crate::routes::{NewProduct, ProductJson, UpdateProduct};
 use crate::utils::PostgresSession;
 
 #[derive(sea_query::Iden)]
@@ -24,6 +24,8 @@ pub trait ProductRepository {
     async fn get(&self, id: i64) -> Result<Option<ProductJson>, Error>;
 
     async fn create(&self, new_product: NewProduct) -> Result<i64, Error>;
+
+    async fn update(&self, update_product: UpdateProduct) -> Result<(), Error>;
 
     async fn delete(&self, id: i64) -> Result<(), Error>;
 }
@@ -97,6 +99,40 @@ impl ProductRepository for PostgresProductRepoImpl {
             .await?;
 
         Ok(res.get(0))
+    }
+
+    async fn update(&self, update_product: UpdateProduct) -> Result<(), Error> {
+        let mut conn = self.session.get_session().await;
+
+        let query = {
+            let mut update_date = vec![];
+
+            if let Some(name) = update_product.name {
+                update_date.push((Products::Name, name.0.into()));
+            }
+
+            if let Some(currency) = update_product.currency {
+                update_date.push((Products::Currency, currency.0.into()));
+            }
+
+            if let Some(price) = update_product.price {
+                update_date.push((Products::Price, price.into()));
+            }
+
+            update_date.push((Products::UpdatedAt, Utc::now().into()));
+
+            Query::update()
+                .table(Products::Table)
+                .values(update_date)
+                .and_where(Expr::col((Products::Table, Products::Id)).eq(update_product.id))
+                .to_string(PostgresQueryBuilder)
+        };
+
+        let _ = sqlx::query(query.as_str())
+            .execute(conn.deref_mut())
+            .await?;
+
+        Ok(())
     }
 
     async fn delete(&self, id: i64) -> Result<(), Error> {

@@ -41,6 +41,21 @@ pub struct DeleteProductRequest {
     pub id: i64,
 }
 
+#[derive(serde::Deserialize, Debug)]
+pub struct UpdateProductRequest {
+    pub id: i64,
+    pub name: Option<String>,
+    pub currency: Option<i16>,
+    pub price: Option<f64>,
+}
+
+pub struct UpdateProduct {
+    pub id: i64,
+    pub name: Option<ValidProductName>,
+    pub currency: Option<ValidCurrency>,
+    pub price: Option<f64>,
+}
+
 impl NewProduct {
     pub async fn parse(req: CreateProductRequest) -> Result<Self, String> {
         if req.name.trim().is_empty() {
@@ -58,6 +73,21 @@ impl NewProduct {
             id,
             name: ValidProductName(req.name.trim().to_owned()),
             currency: ValidCurrency(req.currency),
+            price: req.price,
+        })
+    }
+}
+
+impl UpdateProduct {
+    pub async fn parse(req: UpdateProductRequest) -> Result<Self, String> {
+        if req.name.is_some() && req.name.as_ref().unwrap().trim().is_empty() {
+            return Err("Product name is empty.".to_string());
+        }
+
+        Ok(Self {
+            id: req.id,
+            name: req.name.map(|e| ValidProductName(e.trim().to_owned())),
+            currency: req.currency.map(ValidCurrency),
             price: req.price,
         })
     }
