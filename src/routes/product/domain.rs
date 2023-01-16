@@ -10,9 +10,11 @@ pub struct CreateProductRequest {
 
 pub struct ValidCurrency(pub i16);
 
+pub struct ValidProductName(pub String);
+
 pub struct NewProduct {
     pub id: i64,
-    pub name: String,
+    pub name: ValidProductName,
     pub currency: ValidCurrency,
     pub price: f64,
 }
@@ -35,6 +37,10 @@ pub struct CreateProductResponse {
 
 impl NewProduct {
     pub async fn parse(req: CreateProductRequest) -> Result<Self, String> {
+        if req.name.trim().is_empty() {
+            return Err("Product name is empty.".to_string());
+        }
+
         let id = async {
             let generator = product_id_generator();
             let mut generator = generator.lock().unwrap();
@@ -44,7 +50,7 @@ impl NewProduct {
 
         Ok(Self {
             id,
-            name: req.name,
+            name: ValidProductName(req.name.trim().to_owned()),
             currency: ValidCurrency(req.currency),
             price: req.price,
         })
