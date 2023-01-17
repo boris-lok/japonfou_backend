@@ -2,7 +2,7 @@ use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
 use fake::Fake;
 
-use japonfou::routes::{CustomerJson, ListCustomersResponse, CreateCustomerResponse};
+use japonfou::routes::{CreateCustomerResponse, CustomerJson, ListCustomersResponse};
 
 use crate::helpers::spawn_app;
 

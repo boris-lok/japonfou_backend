@@ -1,20 +1,20 @@
 use std::net::TcpListener;
 
-use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
 use argon2::password_hash::SaltString;
-use fake::Fake;
+use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
 use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
+use fake::Fake;
 use itertools::Itertools;
 use secrecy::ExposeSecret;
 use serde_json::Value;
-use sqlx::{Connection, Executor, PgConnection, PgPool};
 use sqlx::types::Uuid;
+use sqlx::{Connection, Executor, PgConnection, PgPool};
 
-use japonfou::configuration::{DatabaseSettings, get_configuration};
+use japonfou::configuration::{get_configuration, DatabaseSettings};
 use japonfou::routes::{CreateCustomerResponse, CreateProductResponse, LoginResponse};
 use japonfou::startup::{get_database_connection, run};
-use japonfou::utils::{JWT_SECRET_KEY_INSTANCE, JwtKey};
+use japonfou::utils::{JwtKey, JWT_SECRET_KEY_INSTANCE};
 
 pub struct AuthTestApp {
     pub address: String,
