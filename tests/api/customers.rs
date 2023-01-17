@@ -1,3 +1,4 @@
+use base64::Engine;
 use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
 use fake::Fake;
@@ -443,7 +444,7 @@ async fn list_customers_works_with_filter() {
     ];
 
     for keyword in test_cases {
-        let keyword = base64::encode(&keyword);
+        let keyword = base64::engine::general_purpose::STANDARD.encode(&keyword);
         let uri = format!("/api/v1/admin/customers?keyword={}", keyword);
 
         let response = app.get(&uri).await;

@@ -10,6 +10,7 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::{Extension, Json};
 use axum_extra::extract::WithRejection;
+use base64::Engine;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -111,7 +112,8 @@ pub async fn list_products_handler(
 
     let search_parameter = if let Some(keyword) = &payload.keyword {
         // TODO: It should be written in pretty way.
-        base64::decode(keyword)
+        base64::engine::general_purpose::STANDARD
+            .decode(keyword)
             .as_ref()
             .map(|e| serde_json::from_slice::<ProductSearchParameters>(e))
             .map_err(|_| AppError::DecodeSearchParameterFailed)?

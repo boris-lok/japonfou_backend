@@ -7,6 +7,7 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::{Extension, Json};
 use axum_extra::extract::WithRejection;
+use base64::Engine;
 
 use crate::errors::{AppError, CustomerError};
 use crate::repositories::CustomerRepo;
@@ -135,7 +136,8 @@ pub async fn list_customers_handler(
 
     let search_parameter = if let Some(keyword) = &payload.keyword {
         // TODO: It should be written in pretty way.
-        base64::decode(keyword)
+        base64::engine::general_purpose::STANDARD
+            .decode(keyword)
             .as_ref()
             .map(|e| serde_json::from_slice::<CustomerSearchParameters>(e))
             .map_err(|_| AppError::DecodeSearchParameterFailed)?

@@ -1,4 +1,5 @@
 use crate::helpers::spawn_app;
+use base64::Engine;
 use fake::faker::name::en::Name;
 use fake::Fake;
 use japonfou::routes::{CreateProductResponse, ListProductsResponse, ProductJson};
@@ -270,7 +271,7 @@ async fn list_products_works_with_filter() {
     ];
 
     for keyword in test_cases {
-        let keyword = base64::encode(&keyword);
+        let keyword = base64::engine::general_purpose::STANDARD.encode(&keyword);
         let uri = format!("/api/v1/admin/products?keyword={}", keyword);
 
         let response = app.get(&uri).await;
