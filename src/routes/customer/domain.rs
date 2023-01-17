@@ -65,19 +65,19 @@ pub struct NewCustomer {
 
 impl NewCustomer {
     pub async fn parse(customer: CreateCustomerRequest) -> Result<Self, String> {
-        let id = async {
-            let generator = customer_id_generator();
-            let mut generator = generator.lock().unwrap();
-            generator.real_time_generate()
-        }
-        .await;
-
         let email = customer.email.map(ValidEmail::parse).transpose()?;
         let phone = customer.phone.map(ValidPhone::parse).transpose()?;
 
         if email.is_none() && phone.is_none() {
             return Err("Email and phone are missing.".to_string());
         }
+
+        let id = async {
+            let generator = customer_id_generator();
+            let mut generator = generator.lock().unwrap();
+            generator.real_time_generate()
+        }
+        .await;
 
         Ok(Self {
             id,

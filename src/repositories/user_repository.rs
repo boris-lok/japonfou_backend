@@ -10,7 +10,7 @@ use crate::errors::{AppError, AuthError};
 use crate::utils::PostgresSession;
 
 #[derive(sea_query::Iden)]
-enum Users {
+pub(crate) enum Users {
     Table,
     Id,
     Username,

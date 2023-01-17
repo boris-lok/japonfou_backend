@@ -10,5 +10,5 @@ create table order_items
     created_at  TIMESTAMPTZ not null,
     updated_at  TIMESTAMPTZ,
     deleted_at  TIMESTAMPTZ,
-    primary key
+    primary key (id)
 )

@@ -12,7 +12,7 @@ use crate::routes::{
 use crate::utils::PostgresSession;
 
 #[derive(sea_query::Iden)]
-enum Customers {
+pub(crate) enum Customers {
     Table,
     Id,
     Name,

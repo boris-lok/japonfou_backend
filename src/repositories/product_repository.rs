@@ -8,7 +8,7 @@ use crate::routes::{NewProduct, ProductJson, ProductSearchParameters, UpdateProd
 use crate::utils::PostgresSession;
 
 #[derive(sea_query::Iden)]
-enum Products {
+pub(crate) enum Products {
     Table,
     Id,
     Name,

@@ -16,8 +16,8 @@ use uuid::Uuid;
 
 use crate::configuration::{DatabaseSettings, Settings};
 use crate::repositories::{
-    CustomerRepo, PostgresCustomerRepoImpl, PostgresProductRepoImpl, PostgresUserRepoImpl,
-    ProductRepository, UserRepo,
+    CustomerRepo, OrderItemRepo, PostgresCustomerRepoImpl, PostgresOrderItemRepo,
+    PostgresProductRepoImpl, PostgresUserRepoImpl, ProductRepository, UserRepo,
 };
 use crate::routes::{
     change_password, create_customer_handler, create_product_handler, delete_customer_handler,
@@ -76,6 +76,13 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
         .expect("Failed to create product repository")
         as Arc<dyn ProductRepository + Send + Sync>;
 
+    let order_item_repo = PostgresSession::new(state.db_pool.clone())
+        .await
+        .map(PostgresOrderItemRepo::new)
+        .map(Arc::new)
+        .expect("Failed to create a order item repository")
+        as Arc<dyn OrderItemRepo + Send + Sync>;
+
     let customer_routes = Router::new()
         .route("/customers/:id", get(get_customer_handler))
         .route("/customers", get(list_customers_handler))
@@ -122,6 +129,7 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
         .layer(Extension(customer_repo))
         .layer(Extension(user_repo))
         .layer(Extension(product_repo))
+        .layer(Extension(order_item_repo))
         .with_state(state);
 
     axum::Server::from_tcp(listener)
