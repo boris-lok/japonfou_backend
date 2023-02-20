@@ -11,6 +11,7 @@ use tower::ServiceBuilder;
 use tower_http::request_id::{MakeRequestId, RequestId};
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 use tower_http::ServiceBuilderExt;
+use tower_http::{cors::CorsLayer};
 use tracing::Level;
 use uuid::Uuid;
 
@@ -130,6 +131,7 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
         .layer(Extension(user_repo))
         .layer(Extension(product_repo))
         .layer(Extension(order_item_repo))
+        .layer(CorsLayer::permissive())
         .with_state(state);
 
     axum::Server::from_tcp(listener)
