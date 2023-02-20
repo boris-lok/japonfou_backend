@@ -208,7 +208,7 @@ async fn send_api_request(
         let token = format!("Bearer {}", token.unwrap());
         header_map.append(reqwest::header::AUTHORIZATION, token.parse().unwrap());
     }
-    let uri = format!("{}{}", address, uri);
+    let uri = format!("{address}{uri}");
     let builder = match method {
         RequestMethod::Post => client.post(&uri),
         RequestMethod::Get => client.get(&uri),
@@ -298,7 +298,7 @@ pub async fn spawn_app() -> TestApp {
     let redis_client = redis::Client::open(configuration.redis_uri.expose_secret().as_str())
         .expect("Failed to connect the redis");
 
-    let _ = tokio::spawn(run(configuration, listener));
+    tokio::spawn(run(configuration, listener));
 
     let client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
@@ -307,7 +307,7 @@ pub async fn spawn_app() -> TestApp {
         .unwrap();
 
     let app = TestApp {
-        address: format!("http://127.0.0.1:{}", application_port),
+        address: format!("http://127.0.0.1:{application_port}"),
         port: application_port,
         api_client: client,
         db_pool,

@@ -183,7 +183,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
         let offset = page * page_size;
 
         fn format_like_string(tbl: Customers, col: Customers, value: &str) -> SimpleExpr {
-            let formatted_string = format!(r#"%{}%"#, value);
+            let formatted_string = format!(r#"%{value}%"#);
             Expr::col((tbl, col)).like(formatted_string.as_str())
         }
 

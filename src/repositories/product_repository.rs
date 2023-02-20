@@ -169,7 +169,7 @@ impl ProductRepository for PostgresProductRepoImpl {
         let offset = page * page_size;
 
         fn format_like_string(col: Products, value: &str) -> SimpleExpr {
-            let formatted_string = format!(r#"%{}%"#, value);
+            let formatted_string = format!(r#"%{value}%"#);
             Expr::col((Products::Table, col)).like(formatted_string.as_str())
         }
 

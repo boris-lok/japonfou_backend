@@ -82,8 +82,7 @@ async fn create_new_product_return_a_400_when_data_is_invalid() {
         assert_eq!(
             400,
             response.status().as_u16(),
-            "The API didn't fail with 400 Bad Request when the payload was {}",
-            msg
+            "The API didn't fail with 400 Bad Request when the payload was {msg}",
         );
     }
 }
@@ -202,8 +201,7 @@ async fn update_product_return_a_400_when_data_is_invalid() {
         assert_eq!(
             400,
             response.status().as_u16(),
-            "The API didn't fail with 400 Bad Request when the payload was {}",
-            msg
+            "The API didn't fail with 400 Bad Request when the payload was {msg}",
         );
     }
 }
@@ -272,7 +270,7 @@ async fn list_products_works_with_filter() {
 
     for keyword in test_cases {
         let keyword = base64::engine::general_purpose::STANDARD.encode(&keyword);
-        let uri = format!("/api/v1/admin/products?keyword={}", keyword);
+        let uri = format!("/api/v1/admin/products?keyword={keyword}");
 
         let response = app.get(&uri).await;
         assert_eq!(response.status().as_u16(), 200);
@@ -299,8 +297,7 @@ async fn list_products_with_page_and_page_size_works() {
     // Act
     for (page, page_size, expected) in test_cases {
         let uri = format!(
-            "/api/v1/admin/products?page={}&page_size={}",
-            page, page_size
+            "/api/v1/admin/products?page={page}&page_size={page_size}",
         );
 
         // Assert
@@ -320,7 +317,7 @@ async fn list_products_failed_when_keyword_is_invalid() {
     let login_body = app.login_body();
     let app = app.login(&login_body).await;
     let keyword = "random_string";
-    let uri = format!("/api/v1/admin/products?keyword={}", keyword);
+    let uri = format!("/api/v1/admin/products?keyword={keyword}");
 
     // Act
     let response = app.get(&uri).await;
