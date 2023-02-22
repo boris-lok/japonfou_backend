@@ -3,7 +3,7 @@ use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
 use fake::Fake;
 
-use japonfou::routes::{CreateCustomerResponse, ListCustomersResponse, RawCustomer};
+use japonfou::routes::{CreateCustomerResponse, CustomerJson, ListCustomersResponse};
 
 use crate::helpers::spawn_app;
 
@@ -162,7 +162,7 @@ async fn update_customer_works() {
     let phone = "(853) 87654321".to_string();
 
     let update_request = serde_json::json!({
-        "id": id,
+        "id": id.to_string(),
         "name": name,
         "email": email,
         "phone": phone,
@@ -248,7 +248,7 @@ async fn update_customer_return_409_when_data_conflict_with_existing_email_or_ph
 
     // Act - Use `A` information to update `B`
     let request = serde_json::json!({
-        "id": b_id,
+        "id": b_id.to_string(),
         "email": data_from_db.email
     });
 
@@ -256,7 +256,7 @@ async fn update_customer_return_409_when_data_conflict_with_existing_email_or_ph
     assert_eq!(response.status().as_u16(), 409);
 
     let request = serde_json::json!({
-        "id": b_id,
+        "id": b_id.to_string(),
         "phone": data_from_db.phone
     });
     let response = app.put("/api/v1/admin/customers", &request).await;
@@ -281,7 +281,7 @@ async fn update_customer_works_when_using_the_same_email_or_phone() {
 
     // Act - Use `A` information to update `A`
     let request = serde_json::json!({
-        "id": id,
+        "id": id.to_string(),
         "email": data_from_db.email
     });
 
@@ -289,7 +289,7 @@ async fn update_customer_works_when_using_the_same_email_or_phone() {
     assert_eq!(response.status().as_u16(), 200);
 
     let request = serde_json::json!({
-        "id": id,
+        "id": id.to_string(),
         "phone": data_from_db.phone
     });
     let response = app.put("/api/v1/admin/customers", &request).await;
@@ -335,13 +335,14 @@ async fn get_customer_works() {
 
     assert_eq!(response.status().as_u16(), 200);
 
-    let data: RawCustomer = response.json().await.expect("Failed to decode json");
+    let data: CustomerJson = response.json().await.expect("Failed to decode json");
 
-    let data_from_db = sqlx::query_as::<_, RawCustomer>(r#"SELECT * FROM customers where id=$1; "#)
-        .bind(id)
-        .fetch_one(&app.db_pool)
-        .await
-        .expect("Failed to fetch saved customer");
+    let data_from_db =
+        sqlx::query_as::<_, CustomerJson>(r#"SELECT * FROM customers where id=$1; "#)
+            .bind(id)
+            .fetch_one(&app.db_pool)
+            .await
+            .expect("Failed to fetch saved customer");
 
     assert_eq!(data_from_db.id, data.id);
     assert_eq!(data_from_db.name, data.name);
@@ -415,11 +416,12 @@ async fn list_customers_works_with_filter() {
     let data = response_json.unwrap();
     assert_eq!(data.data.len(), 20);
 
-    let data_from_db = sqlx::query_as::<_, RawCustomer>(r#"SELECT * FROM customers where id=$1; "#)
-        .bind(expected_ids[0])
-        .fetch_one(&app.db_pool)
-        .await
-        .expect("Failed to fetch saved customer");
+    let data_from_db =
+        sqlx::query_as::<_, CustomerJson>(r#"SELECT * FROM customers where id=$1; "#)
+            .bind(expected_ids[0])
+            .fetch_one(&app.db_pool)
+            .await
+            .expect("Failed to fetch saved customer");
 
     let id = data_from_db.id.to_string();
     let name = data_from_db.name;

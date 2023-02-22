@@ -155,7 +155,7 @@ async fn update_product_works() {
     let currency = 344_i16;
     let price = 5.0_f64;
     let body = serde_json::json!({
-        "id": id,
+        "id": id.to_string(),
         "name": name,
         "currency": currency,
         "price": price,

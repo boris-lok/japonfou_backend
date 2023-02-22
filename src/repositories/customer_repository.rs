@@ -5,8 +5,7 @@ use sea_query::{Expr, PostgresQueryBuilder, Query, SimpleExpr};
 use sqlx::{Error, Row};
 
 use crate::routes::{
-    CustomerJson, CustomerSearchParameters, NewCustomer, UpdateCustomer, ValidEmail,
-    ValidPhone,
+    CustomerJson, CustomerSearchParameters, NewCustomer, UpdateCustomer, ValidEmail, ValidPhone,
 };
 use crate::utils::PostgresSession;
 
