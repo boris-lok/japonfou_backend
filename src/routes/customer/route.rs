@@ -13,7 +13,7 @@ use crate::errors::{AppError, CustomerError};
 use crate::repositories::CustomerRepo;
 use crate::routes::customer::{CreateCustomerRequest, CreateCustomerResponse, NewCustomer};
 use crate::routes::{
-    Claims, CustomerSearchParameters, DeleteCustomerRequest, ListCustomersRequest,
+    Claims,  CustomerSearchParameters, DeleteCustomerRequest, ListCustomersRequest,
     ListCustomersResponse, UpdateCustomer, UpdateCustomerRequest,
 };
 

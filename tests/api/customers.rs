@@ -3,7 +3,7 @@ use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
 use fake::Fake;
 
-use japonfou::routes::{CreateCustomerResponse, CustomerJson, ListCustomersResponse};
+use japonfou::routes::{CreateCustomerResponse, ListCustomersResponse, RawCustomer};
 
 use crate::helpers::spawn_app;
 
@@ -335,14 +335,13 @@ async fn get_customer_works() {
 
     assert_eq!(response.status().as_u16(), 200);
 
-    let data: CustomerJson = response.json().await.expect("Failed to decode json");
+    let data: RawCustomer = response.json().await.expect("Failed to decode json");
 
-    let data_from_db =
-        sqlx::query_as::<_, CustomerJson>(r#"SELECT * FROM customers where id=$1; "#)
-            .bind(id)
-            .fetch_one(&app.db_pool)
-            .await
-            .expect("Failed to fetch saved customer");
+    let data_from_db = sqlx::query_as::<_, RawCustomer>(r#"SELECT * FROM customers where id=$1; "#)
+        .bind(id)
+        .fetch_one(&app.db_pool)
+        .await
+        .expect("Failed to fetch saved customer");
 
     assert_eq!(data_from_db.id, data.id);
     assert_eq!(data_from_db.name, data.name);
@@ -416,12 +415,11 @@ async fn list_customers_works_with_filter() {
     let data = response_json.unwrap();
     assert_eq!(data.data.len(), 20);
 
-    let data_from_db =
-        sqlx::query_as::<_, CustomerJson>(r#"SELECT * FROM customers where id=$1; "#)
-            .bind(expected_ids[0])
-            .fetch_one(&app.db_pool)
-            .await
-            .expect("Failed to fetch saved customer");
+    let data_from_db = sqlx::query_as::<_, RawCustomer>(r#"SELECT * FROM customers where id=$1; "#)
+        .bind(expected_ids[0])
+        .fetch_one(&app.db_pool)
+        .await
+        .expect("Failed to fetch saved customer");
 
     let id = data_from_db.id.to_string();
     let name = data_from_db.name;

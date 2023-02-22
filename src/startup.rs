@@ -8,10 +8,10 @@ use secrecy::{ExposeSecret, Secret};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use tower::ServiceBuilder;
+use tower_http::cors::CorsLayer;
 use tower_http::request_id::{MakeRequestId, RequestId};
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 use tower_http::ServiceBuilderExt;
-use tower_http::{cors::CorsLayer};
 use tracing::Level;
 use uuid::Uuid;
 

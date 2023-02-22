@@ -296,9 +296,7 @@ async fn list_products_with_page_and_page_size_works() {
 
     // Act
     for (page, page_size, expected) in test_cases {
-        let uri = format!(
-            "/api/v1/admin/products?page={page}&page_size={page_size}",
-        );
+        let uri = format!("/api/v1/admin/products?page={page}&page_size={page_size}",);
 
         // Assert
         let response = app.get(&uri).await;

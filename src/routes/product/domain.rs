@@ -1,6 +1,8 @@
 use crate::routes::product_id_generator;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
+use sqlx::postgres::PgRow;
+use sqlx::Row;
 
 #[derive(serde::Deserialize, Debug)]
 pub struct CreateProductRequest {
@@ -20,9 +22,9 @@ pub struct NewProduct {
     pub price: f64,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, sqlx::FromRow, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct ProductJson {
-    pub id: i64,
+    pub id: String,
     pub name: String,
     pub currency: i16,
     pub price: Decimal,
@@ -43,7 +45,7 @@ pub struct DeleteProductRequest {
 
 #[derive(serde::Deserialize, Debug)]
 pub struct UpdateProductRequest {
-    pub id: i64,
+    pub id: String,
     pub name: Option<String>,
     pub currency: Option<i16>,
     pub price: Option<f64>,
@@ -103,11 +105,38 @@ impl UpdateProduct {
             return Err("Product name is empty.".to_string());
         }
 
+        let id = req
+            .id
+            .parse::<i64>()
+            .map_err(|_| "Can't parse id to i64.".to_string())?;
+
         Ok(Self {
-            id: req.id,
+            id,
             name: req.name.map(|e| ValidProductName(e.trim().to_owned())),
             currency: req.currency.map(ValidCurrency),
             price: req.price,
+        })
+    }
+}
+
+impl<'r> ::sqlx::FromRow<'r, PgRow> for ProductJson {
+    fn from_row(row: &'r PgRow) -> Result<Self, sqlx::Error> {
+        let id: i64 = row.try_get(0)?;
+        let name: String = row.try_get(1)?;
+        let currency: i16 = row.try_get(2)?;
+        let price: Decimal = row.try_get(3)?;
+        let created_at: DateTime<Utc> = row.try_get(4)?;
+        let updated_at: Option<DateTime<Utc>> = row.try_get(5)?;
+        let deleted_at: Option<DateTime<Utc>> = row.try_get(6)?;
+
+        Ok(Self {
+            id: id.to_string(),
+            name,
+            currency,
+            price,
+            created_at,
+            updated_at,
+            deleted_at,
         })
     }
 }

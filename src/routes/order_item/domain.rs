@@ -7,7 +7,7 @@ use crate::routes::{order_item_id_generator, CustomerJson, ProductJson};
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct OrderItemJson {
-    pub id: i64,
+    pub id: String,
     pub customer: CustomerJson,
     pub product: ProductJson,
     pub quantity: u32,
@@ -67,7 +67,7 @@ impl<'r> ::sqlx::FromRow<'r, PgRow> for OrderItemJson {
         let product_created_at: DateTime<Utc> = row.try_get(13)?;
 
         let customer = CustomerJson {
-            id: customer_id,
+            id: customer_id.to_string(),
             name: customer_name,
             email: None,
             phone: None,
@@ -78,7 +78,7 @@ impl<'r> ::sqlx::FromRow<'r, PgRow> for OrderItemJson {
         };
 
         let product = ProductJson {
-            id: product_id,
+            id: product_id.to_string(),
             name: product_name,
             currency: product_currency,
             price: product_price,
@@ -88,7 +88,7 @@ impl<'r> ::sqlx::FromRow<'r, PgRow> for OrderItemJson {
         };
 
         Ok(Self {
-            id,
+            id: id.to_string(),
             customer,
             product,
             quantity: quantity as u32,
