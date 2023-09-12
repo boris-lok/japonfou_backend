@@ -1,5 +1,3 @@
-use std::ops::DerefMut;
-
 use chrono::Utc;
 use sea_query::{Expr, PostgresQueryBuilder, Query, SimpleExpr};
 use sqlx::{Error, Row};
@@ -69,7 +67,7 @@ impl ProductRepository for PostgresProductRepoImpl {
         };
 
         sqlx::query_as::<_, ProductJson>(query.as_str())
-            .fetch_optional(conn.deref_mut())
+            .fetch_optional(conn.as_mut())
             .await
     }
 
@@ -101,9 +99,7 @@ impl ProductRepository for PostgresProductRepoImpl {
                 .to_string(PostgresQueryBuilder)
         };
 
-        let res = sqlx::query(dbg!(&query))
-            .fetch_one(conn.deref_mut())
-            .await?;
+        let res = sqlx::query(dbg!(&query)).fetch_one(conn.as_mut()).await?;
 
         Ok(res.get(0))
     }
@@ -136,9 +132,7 @@ impl ProductRepository for PostgresProductRepoImpl {
                 .to_string(PostgresQueryBuilder)
         };
 
-        let _ = sqlx::query(query.as_str())
-            .execute(conn.deref_mut())
-            .await?;
+        let _ = sqlx::query(query.as_str()).execute(conn.as_mut()).await?;
 
         Ok(())
     }
@@ -153,7 +147,7 @@ impl ProductRepository for PostgresProductRepoImpl {
             .and_where(Expr::col((Products::Table, Products::Id)).eq(id))
             .to_string(PostgresQueryBuilder);
 
-        let _ = sqlx::query(query.as_str()).execute(conn.deref_mut()).await;
+        let _ = sqlx::query(query.as_str()).execute(conn.as_mut()).await;
 
         Ok(())
     }
@@ -201,7 +195,7 @@ impl ProductRepository for PostgresProductRepoImpl {
             .to_string(PostgresQueryBuilder);
 
         sqlx::query_as::<_, ProductJson>(dbg!(query.as_str()))
-            .fetch_all(conn.deref_mut())
+            .fetch_all(conn.as_mut())
             .await
     }
 }

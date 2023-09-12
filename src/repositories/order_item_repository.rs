@@ -1,8 +1,7 @@
 use crate::repositories::{Customers, Products};
 use chrono::Utc;
 use sea_query::{Expr, JoinType, PostgresQueryBuilder, Query};
-use sqlx::{Error, Row};
-use std::ops::DerefMut;
+use sqlx::Error;
 
 use crate::routes::{NewOrderItem, OrderItemJson};
 use crate::utils::PostgresSession;
@@ -88,12 +87,14 @@ impl OrderItemRepo for PostgresOrderItemRepo {
             .to_string(PostgresQueryBuilder);
 
         sqlx::query_as::<_, OrderItemJson>(query.as_str())
-            .fetch_optional(conn.deref_mut())
+            .fetch_optional(conn.as_mut())
             .await
     }
 
     #[tracing::instrument(name = "Save a new order item into database", skip(self))]
     async fn create(&self, new_order_item: NewOrderItem) -> Result<i64, Error> {
+        use sqlx::Row;
+
         let mut conn = self.session.get_session().await;
 
         let query = Query::insert()
@@ -118,7 +119,7 @@ impl OrderItemRepo for PostgresOrderItemRepo {
             .to_string(PostgresQueryBuilder);
 
         let res = sqlx::query(dbg!(&query))
-            .fetch_one(conn.deref_mut())
+            .fetch_one(conn.as_mut())
             .await?;
 
         Ok(res.get(0))

@@ -1,5 +1,3 @@
-use std::ops::DerefMut;
-
 use async_trait::async_trait;
 use chrono::Utc;
 use sea_query::{Expr, PostgresQueryBuilder, Query, SimpleExpr};
@@ -80,7 +78,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
             .to_string(PostgresQueryBuilder);
 
         sqlx::query_as::<_, CustomerJson>(dbg!(&query))
-            .fetch_optional(conn.deref_mut())
+            .fetch_optional(conn.as_mut())
             .await
     }
 
@@ -114,9 +112,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
                 .to_string(PostgresQueryBuilder)
         };
 
-        let res = sqlx::query(dbg!(&query))
-            .fetch_one(conn.deref_mut())
-            .await?;
+        let res = sqlx::query(dbg!(&query)).fetch_one(conn.as_mut()).await?;
 
         Ok(res.get(0))
     }
@@ -153,7 +149,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
             query
         };
 
-        let _ = sqlx::query(dbg!(&query)).execute(conn.deref_mut()).await?;
+        let _ = sqlx::query(dbg!(&query)).execute(conn.as_mut()).await?;
 
         Ok(())
     }
@@ -168,7 +164,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
             .and_where(Expr::col((Customers::Table, Customers::Id)).eq(id))
             .to_string(PostgresQueryBuilder);
 
-        let _ = sqlx::query(dbg!(&query)).execute(conn.deref_mut()).await;
+        let _ = sqlx::query(dbg!(&query)).execute(conn.as_mut()).await;
 
         Ok(())
     }
@@ -234,7 +230,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
             .to_string(PostgresQueryBuilder);
 
         sqlx::query_as::<_, CustomerJson>(dbg!(&query))
-            .fetch_all(conn.deref_mut())
+            .fetch_all(conn.as_mut())
             .await
     }
 
@@ -267,7 +263,7 @@ impl CustomerRepo for PostgresCustomerRepoImpl {
             .to_string(PostgresQueryBuilder);
 
         sqlx::query(dbg!(&query))
-            .fetch_optional(conn.deref_mut())
+            .fetch_optional(conn.as_mut())
             .await
             .map(|row| row.map_or_else(|| false, |e| e.len() > 0))
     }

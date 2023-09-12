@@ -1,5 +1,3 @@
-use std::ops::DerefMut;
-
 use anyhow::Context;
 use async_trait::async_trait;
 use sea_query::{Expr, PostgresQueryBuilder, Query};
@@ -59,7 +57,7 @@ impl UserRepo for PostgresUserRepoImpl {
             .to_string(PostgresQueryBuilder);
 
         let res = sqlx::query(&query)
-            .fetch_optional(conn.deref_mut())
+            .fetch_optional(conn.as_mut())
             .await
             .context("Failed to perform a query to retrieve stored credentials.")
             .map_err(AuthError::UnexpectedError)?
@@ -82,7 +80,7 @@ impl UserRepo for PostgresUserRepoImpl {
             .to_string(PostgresQueryBuilder);
 
         let res = sqlx::query(&query)
-            .fetch_one(conn.deref_mut())
+            .fetch_one(conn.as_mut())
             .await
             .context("Failed to perform a query to retrieve a username")
             .map_err(AppError::UnexpectedError)
@@ -108,7 +106,7 @@ impl UserRepo for PostgresUserRepoImpl {
             .to_string(PostgresQueryBuilder);
 
         let res = sqlx::query(&query)
-            .execute(conn.deref_mut())
+            .execute(conn.as_mut())
             .await
             .map(|e| e.rows_affected() == 1)?;
 
