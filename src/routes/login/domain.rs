@@ -43,8 +43,7 @@ where
             .headers
             .get("Authorization")
             .and_then(|value| value.to_str().ok())
-            .map(|value| value.split_once(" "))
-            .flatten()
+            .and_then(|value| value.split_once(' '))
             .context("Missing Authorization header")
             .map_err(AuthError::MissingBearer)?
             .1;
