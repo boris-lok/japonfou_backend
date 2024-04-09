@@ -1,5 +1,5 @@
-use std::net::TcpListener;
 use std::sync::Arc;
+use tokio::net::TcpListener;
 
 use axum::http::Request;
 use axum::routing::{delete, get, post, put};
@@ -46,7 +46,7 @@ impl MakeRequestId for MakeRequestUuid {
     }
 }
 
-pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
+pub async fn run(config: Settings, listener: TcpListener) -> Result<(), std::io::Error> {
     let client = redis::Client::open(config.redis_uri.expose_secret().as_str())
         .expect("Failed to connect the redis");
 
@@ -134,10 +134,7 @@ pub async fn run(config: Settings, listener: TcpListener) -> hyper::Result<()> {
         .layer(CorsLayer::permissive())
         .with_state(state);
 
-    axum::Server::from_tcp(listener)
-        .expect("Can't bind tcp listener")
-        .serve(app.into_make_service())
-        .await
+    axum::serve(listener, app.into_make_service()).await
 }
 
 pub async fn get_database_connection(config: &DatabaseSettings) -> PgPool {

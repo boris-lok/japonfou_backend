@@ -1,4 +1,4 @@
-use std::net::TcpListener;
+use tokio::net::TcpListener;
 
 use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
@@ -289,7 +289,9 @@ pub async fn spawn_app() -> TestApp {
     let db_pool = get_database_connection(&configuration.database).await;
 
     let address = format!("127.0.0.1:{}", configuration.application.port);
-    let listener = TcpListener::bind(&address).expect("Can't bind tcp listener");
+    let listener = TcpListener::bind(&address)
+        .await
+        .expect("Can't bind tcp listener");
     let application_port = listener.local_addr().unwrap().port();
 
     let _ = JWT_SECRET_KEY_INSTANCE

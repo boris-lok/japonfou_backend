@@ -4,6 +4,7 @@ use sqlx::Row;
 
 use crate::routes::customer_id_generator;
 use crate::utils::get_phone_number_regex;
+use validator::ValidateEmail;
 
 #[derive(Clone, Debug)]
 pub struct ValidEmail(pub String);
@@ -105,7 +106,7 @@ pub struct CustomerSearchParameters {
 
 impl ValidEmail {
     pub fn parse(s: String) -> Result<Self, String> {
-        if validator::validate_email(&s) {
+        if ValidateEmail::validate_email(&s) {
             Ok(Self(s))
         } else {
             Err(format!("{s} is not a valid email"))

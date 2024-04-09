@@ -118,9 +118,7 @@ impl OrderItemRepo for PostgresOrderItemRepo {
             .returning(Query::returning().column(OrderItems::Id))
             .to_string(PostgresQueryBuilder);
 
-        let res = sqlx::query(dbg!(&query))
-            .fetch_one(conn.as_mut())
-            .await?;
+        let res = sqlx::query(dbg!(&query)).fetch_one(conn.as_mut()).await?;
 
         Ok(res.get(0))
     }

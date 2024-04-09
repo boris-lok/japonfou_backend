@@ -1,10 +1,7 @@
 use anyhow::Context;
 use async_trait::async_trait;
 use axum::extract::{FromRef, FromRequestParts};
-use axum::headers::authorization::Bearer;
-use axum::headers::Authorization;
 use axum::http::request::Parts;
-use axum::{RequestPartsExt, TypedHeader};
 use chrono::Utc;
 use redis::Commands;
 
@@ -42,11 +39,15 @@ where
             .context("Failed to connect redis")
             .map_err(AppError::UnexpectedError)?;
 
-        let TypedHeader(Authorization(bearer)) = parts
-            .extract::<TypedHeader<Authorization<Bearer>>>()
-            .await
-            .context("Missing bearer header")
-            .map_err(AuthError::MissingBearer)?;
+        let bearer = parts
+            .headers
+            .get("Authorization")
+            .and_then(|value| value.to_str().ok())
+            .map(|value| value.split_once(" "))
+            .flatten()
+            .context("Missing Authorization header")
+            .map_err(AuthError::MissingBearer)?
+            .1;
 
         let decoding_key = JWT_SECRET_KEY_INSTANCE
             .get()
@@ -54,7 +55,7 @@ where
             .map_err(AuthError::UnexpectedError)?;
 
         let token_data = jsonwebtoken::decode::<Claims>(
-            bearer.token(),
+            bearer,
             &decoding_key.decoding,
             &jsonwebtoken::Validation::default(),
         )

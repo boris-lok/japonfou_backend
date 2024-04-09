@@ -1,4 +1,4 @@
-use std::net::TcpListener;
+use tokio::net::TcpListener;
 
 use japonfou::configuration::get_configuration;
 use japonfou::startup::run;
@@ -21,6 +21,7 @@ async fn main() {
     );
 
     let listener = TcpListener::bind(&address)
+        .await
         .unwrap_or_else(|_| panic!("Can't bind address {} to TcpListener", &address));
 
     tracing::info!("listening to TcpListener {:?}", &listener);
